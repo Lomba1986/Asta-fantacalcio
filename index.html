@@ -120,6 +120,12 @@
   }
   .stat.hero .lbl{color:var(--amber-deep);}
   .stat.hero .val{color:#c98a00; font-size:28px;}
+  #paceIndicator{
+    margin-top:9px; padding:8px 10px; border-radius:10px; font-size:11.5px; line-height:1.4;
+  }
+  #paceIndicator.ok{background:#eafaf1; color:#1a7a4c;}
+  #paceIndicator.mid{background:#fff7e0; color:#96700a;}
+  #paceIndicator.bad{background:#fff0ee; color:#a0431f;}
   .roles-row{display:flex; gap:6px; margin-top:9px; flex-wrap:wrap;}
   .role-pill{
     font-family:var(--mono); font-size:12px; color:#232b45;
@@ -240,6 +246,11 @@
   .status-line.other-c .who{color:#7a8499;}
   .undo{font-size:12px; color:#d9463d; text-decoration:underline; cursor:pointer; background:none; border:none; font-family:var(--sans);}
 
+  .inline-form-wrap{grid-column:1/-1; display:flex; flex-direction:column; gap:8px;}
+  .role-full-warn{
+    background:#fff3ee; border:1px solid #f0b8a0; color:#a0431f;
+    font-size:12px; padding:8px 10px; border-radius:8px; line-height:1.4;
+  }
   .inline-form{grid-column:1/-1; display:flex; gap:8px; align-items:center;}
   .inline-form input{
     width:70px; padding:8px; border-radius:8px; border:1px solid var(--amber-deep);
@@ -330,15 +341,29 @@
 
   /* ===== ROSA TAB ===== */
   #rosaContent{padding:0 12px 20px;}
-  #teamSwitcher{padding:12px 12px 0;}
-  .team-chips{display:flex; gap:6px; overflow-x:auto; padding-bottom:10px;}
-  .team-chip{
-    flex:none; font-size:13px; padding:6px 13px 6px 6px; border-radius:20px; border:1px solid var(--border);
-    background:#fff; color:#6b7488; cursor:pointer; white-space:nowrap; font-family:var(--sans); font-weight:600;
-    display:inline-flex; align-items:center; gap:6px;
+  #teamSwitcher{padding:12px 12px 4px;}
+  .team-list{
+    background:#fff; border-radius:16px; overflow:hidden;
+    box-shadow:0 2px 10px rgba(30,50,120,0.06); border:1px solid var(--border);
   }
-  .team-chip.active{background:var(--blue); border-color:var(--blue); color:#fff;}
-  .team-chip.add{color:var(--blue); border-color:var(--blue); border-style:dashed; background:transparent;}
+  .team-row{
+    width:100%; display:flex; align-items:center; gap:14px; padding:12px 14px;
+    background:#fff; border:none; border-bottom:1px solid #eef1f7; cursor:pointer;
+    text-align:left; font-family:var(--sans);
+  }
+  .team-row:last-child{border-bottom:none;}
+  .team-row.active{background:#eef4ff;}
+  .team-row-info{flex:1; min-width:0; display:flex; flex-direction:column; gap:2px;}
+  .team-row-name{font-size:16px; font-weight:800; color:var(--chalk); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .team-row.active .team-row-name{color:var(--blue-deep);}
+  .team-row-sub{font-size:12.5px; color:#8891a8;}
+  .team-row-chev{font-size:20px; color:#c7ccd9; font-weight:300;}
+  .team-list-actions{display:flex; gap:8px; margin-top:10px;}
+  .team-list-action-btn{
+    flex:1; padding:10px; border-radius:12px; border:1px dashed var(--border); background:transparent;
+    color:var(--blue); font-size:13px; font-weight:700; cursor:pointer; font-family:var(--sans);
+  }
+  .team-list-action-btn.active{background:var(--blue); border-style:solid; border-color:var(--blue); color:#fff;}
   .team-manage{display:flex; gap:8px; margin-bottom:10px;}
   .team-manage button{
     flex:1; padding:8px; border-radius:8px; border:1px solid var(--border); background:#fff;
@@ -419,6 +444,7 @@
         <div class="val" id="statMax">476</div>
       </div>
     </div>
+    <div id="paceIndicator" style="display:none;"></div>
     <div class="roles-row" id="rolesRow"></div>
     <div class="expand-toggle-bar" id="expandToggleBar" onclick="toggleBudgetbarExpand()"><span class="chev">⌄</span> Obiettivi e backup</div>
   </div>
@@ -527,6 +553,13 @@ let opponentTeams = [
 ]; // precaricate dalla tua lega "Champions Trip" — rinominabili/eliminabili dalla tab Squadre
 let nextTeamId = 10;
 let viewingTeamId = 'mine'; // 'mine' or a team id, controls the Squadre tab content
+let moveLog = []; // storico cronologico: {ts, playerId, nome, ruolo, squadraCalcio, azione, teamId, price}
+let showHistory = false;
+
+function logMove(entry){
+  moveLog.push({ts: Date.now(), ...entry});
+  if(moveLog.length > 500) moveLog.shift(); // non crescere all'infinito in una sessione lunghissima
+}
 
 function teamName(id){
   if(id==='mine') return 'La tua rosa';
@@ -599,6 +632,8 @@ function computeBudget(){
   document.getElementById('statSlot').textContent = emptySlots;
   document.getElementById('statMax').textContent = emptySlots<=0 ? '—' : maxNow;
 
+  updatePaceIndicator(spentMine, filledTotal, remaining, emptySlots);
+
   const rr = document.getElementById('rolesRow');
   rr.innerHTML = '';
   ['P','D','C','A'].forEach(r=>{
@@ -611,6 +646,35 @@ function computeBudget(){
   });
 
   updateTargetPanel(spentByRole);
+}
+
+/// Confronta quanto hai speso finora per giocatore con quanto potrai permetterti in media
+/// per gli slot che restano, per capire se stai andando più veloce o più lento del previsto.
+function updatePaceIndicator(spentMine, filledTotal, remaining, emptySlots){
+  const el = document.getElementById('paceIndicator');
+  if(!el) return;
+  if(filledTotal===0 || emptySlots===0){
+    el.style.display = 'none';
+    return;
+  }
+  const avgPaid = spentMine/filledTotal;
+  const avgLeft = remaining/emptySlots;
+  const ratio = avgPaid>0 ? avgLeft/avgPaid : 2;
+
+  let cls, msg;
+  if(ratio >= 1.15){
+    cls = 'ok';
+    msg = `Ritmo tranquillo: hai pagato in media <b>${avgPaid.toFixed(1)}cr</b>/giocatore, per i ${emptySlots} rimasti ne hai ancora <b>${avgLeft.toFixed(1)}cr</b> a testa.`;
+  } else if(ratio >= 0.85){
+    cls = 'mid';
+    msg = `Ritmo in linea: <b>${avgPaid.toFixed(1)}cr</b>/giocatore finora, <b>${avgLeft.toFixed(1)}cr</b> di media per i ${emptySlots} rimasti.`;
+  } else {
+    cls = 'bad';
+    msg = `⚠️ Stai spendendo veloce: <b>${avgPaid.toFixed(1)}cr</b>/giocatore finora, ma per i ${emptySlots} rimasti hai in media solo <b>${avgLeft.toFixed(1)}cr</b> a testa.`;
+  }
+  el.className = 'pace-indicator ' + cls;
+  el.style.display = 'block';
+  el.innerHTML = msg;
 }
 
 function buildTargetPanelSkeleton(){
@@ -732,15 +796,23 @@ function render(){
     let bottom = '';
     if(openForm && openForm.id===p.id){
       if(openForm.mode==='mine'){
-        bottom = `<div class="inline-form">
+        const full = isRoleFullFor('mine', p.r);
+        const warn = full ? `<div class="role-full-warn">⚠️ Hai già completato questo ruolo (${SLOTS[p.r]}/${SLOTS[p.r]}) — da regolamento, offrire per un ruolo già completo comporta <b>-5 punti</b> in classifica.</div>` : '';
+        bottom = `<div class="inline-form-wrap">
+        ${warn}
+        <div class="inline-form">
           <span style="font-size:13px;color:#232b45;">Preso da me a</span>
           <input type="number" id="priceInput" inputmode="numeric" placeholder="${p.prezzo}" autofocus>
-          <button onclick="confirmTake(${p.id})">Conferma</button>
+          <button onclick="confirmTake(${p.id})">${full ? 'Conferma comunque' : 'Conferma'}</button>
           <button class="cancel" onclick="cancelForm()">Annulla</button>
-        </div>`;
+        </div></div>`;
       } else {
         const teamOptions = opponentTeams.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
-        bottom = `<div class="inline-form" style="flex-wrap:wrap;">
+        const oppFull = openForm.teamId ? isRoleFullFor(openForm.teamId, p.r) : false;
+        const warn = oppFull ? `<div class="role-full-warn">⚠️ ${teamName(openForm.teamId)} ha già completato questo ruolo (${SLOTS[p.r]}/${SLOTS[p.r]}).</div>` : '';
+        bottom = `<div class="inline-form-wrap">
+        ${warn}
+        <div class="inline-form" style="flex-wrap:wrap;">
           <select id="teamSelect" onchange="handleTeamSelectChange(this)">
             <option value="">Squadra non specificata</option>
             ${teamOptions}
@@ -750,7 +822,7 @@ function render(){
           <input type="number" id="priceInput" inputmode="numeric" placeholder="${p.prezzo}" style="width:60px;">
           <button onclick="confirmTake(${p.id})">Conferma</button>
           <button class="cancel" onclick="cancelForm()">Annulla</button>
-        </div>`;
+        </div></div>`;
       }
     } else if(s.status==='free'){
       bottom = `<div class="p-actions">
@@ -901,6 +973,7 @@ function maxOfferNowValue(){
 function quickTakeMine(id){
   const p = PLAYERS_DATA.find(x=>x.id===id);
   state[id] = {status:'mine', price: p.prezzo, teamId:null};
+  logMove({playerId:id, nome:p.nome, ruolo:p.r, squadraCalcio:p.squadra, azione:'preso', status:'mine', teamId:null, price:p.prezzo});
   markAction();
   render();
   updateBkStatus();
@@ -930,6 +1003,11 @@ function handleTeamSelectChange(sel){
     }
   } else {
     openForm.teamId = sel.value ? parseInt(sel.value,10) : null;
+    render();
+    const newSel = document.getElementById('teamSelect');
+    if(newSel) newSel.value = openForm.teamId || '';
+    const priceInput = document.getElementById('priceInput');
+    if(priceInput) priceInput.focus();
   }
 }
 window.handleTeamSelectChange = handleTeamSelectChange;
@@ -938,7 +1016,10 @@ function confirmTake(id){
   const p = PLAYERS_DATA.find(x=>x.id===id);
   let val = parseInt(input.value, 10);
   if(isNaN(val) || val<1) val = p.prezzo;
-  state[id] = {status: openForm.mode, price: val, teamId: openForm.mode==='other' ? (openForm.teamId||null) : null};
+  const mode = openForm.mode;
+  const teamId = mode==='other' ? (openForm.teamId||null) : null;
+  state[id] = {status: mode, price: val, teamId};
+  logMove({playerId:id, nome:p.nome, ruolo:p.r, squadraCalcio:p.squadra, azione:'preso', status:mode, teamId, price:val});
   openForm = null;
   markAction();
   // Se dopo questa presa la ricerca attiva non troverebbe più nessuno (es. hai cercato
@@ -954,6 +1035,11 @@ function confirmTake(id){
   if(currentTab==='best') renderBestTab();
 }
 function undoTake(id){
+  const p = PLAYERS_DATA.find(x=>x.id===id);
+  const prev = state[id];
+  if(p && prev && prev.status!=='free'){
+    logMove({playerId:id, nome:p.nome, ruolo:p.r, squadraCalcio:p.squadra, azione:'annullato', status:prev.status, teamId:prev.teamId, price:prev.price});
+  }
   state[id] = {status:'free', price:null, teamId:null};
   markAction();
   render();
@@ -1009,6 +1095,7 @@ function buildBackupPayload(){
     nextTeamId: nextTeamId,
     autoBackupEnabled: autoBackupEnabled,
     autoBackupEvery: autoBackupEvery,
+    moveLog: moveLog,
     state: state
   };
 }
@@ -1080,6 +1167,9 @@ function loadBackupFile(file){
       if(payload.autoBackupEvery){
         autoBackupEvery = payload.autoBackupEvery;
         document.getElementById('autoBkEvery').value = autoBackupEvery;
+      }
+      if(payload.moveLog){
+        moveLog = payload.moveLog;
       }
       if(payload.state){
         Object.keys(payload.state).forEach(idStr=>{
@@ -1153,6 +1243,17 @@ document.querySelectorAll('.tabbtn').forEach(btn=>{
 });
 
 /* ===================== TAB: ROSA/SQUADRE (sempre live, niente modal) ===================== */
+function isRoleFullFor(teamId, role){
+  let filled = 0;
+  PLAYERS_DATA.forEach(p=>{
+    if(p.r!==role) return;
+    const st = state[p.id];
+    if(teamId==='mine' && st.status==='mine') filled++;
+    else if(teamId!=='mine' && st.status==='other' && st.teamId===teamId) filled++;
+  });
+  return filled >= SLOTS[role];
+}
+
 function buildRosaData(teamId){
   const isMine = teamId==='mine';
   const roster = PLAYERS_DATA.filter(p=>{
@@ -1167,29 +1268,83 @@ function buildRosaData(teamId){
 }
 function renderTeamSwitcher(){
   const el = document.getElementById('teamSwitcher');
-  let html = `<div class="team-chips">`;
-  html += `<button class="team-chip ${viewingTeamId==='mine'?'active':''}" onclick="selectTeam('mine')">${teamLogoImgTag('mine',18)} La tua rosa</button>`;
-  opponentTeams.forEach(t=>{
-    html += `<button class="team-chip ${viewingTeamId===t.id?'active':''}" onclick="selectTeam(${t.id})">${teamLogoImgTag(t.id,18)} ${t.name}</button>`;
+  const need = SLOTS.P+SLOTS.D+SLOTS.C+SLOTS.A;
+  const allTeams = [{id:'mine', name:'La tua rosa'}, ...opponentTeams];
+
+  let html = `<div class="team-list">`;
+  allTeams.forEach(t=>{
+    const {total, roster} = buildRosaData(t.id);
+    const active = (viewingTeamId===t.id && !showHistory);
+    const sub = roster.length===0 ? 'Ancora nessun giocatore' : `${roster.length}/${need} giocatori · ${total}cr spesi`;
+    html += `<button class="team-row ${active?'active':''}" onclick="selectTeam(${t.id==='mine' ? "'mine'" : t.id})">
+      ${teamLogoImgTag(t.id, 52)}
+      <span class="team-row-info">
+        <span class="team-row-name">${t.name}</span>
+        <span class="team-row-sub">${sub}</span>
+      </span>
+      <span class="team-row-chev">›</span>
+    </button>`;
   });
-  html += `<button class="team-chip add" onclick="addOpponentTeamAndSelect()">+ Squadra</button>`;
   html += `</div>`;
+  html += `<div class="team-list-actions">
+    <button class="team-list-action-btn" onclick="addOpponentTeamAndSelect()">➕ Nuova squadra</button>
+    <button class="team-list-action-btn ${showHistory?'active':''}" onclick="toggleHistory()">📜 Storico</button>
+  </div>`;
   el.innerHTML = html;
 }
-function selectTeam(id){
-  viewingTeamId = id;
+function toggleHistory(){
+  showHistory = !showHistory;
   renderTeamSwitcher();
   renderRosaTab();
 }
+window.toggleHistory = toggleHistory;
+function selectTeam(id){
+  viewingTeamId = id;
+  showHistory = false;
+  renderTeamSwitcher();
+  renderRosaTab();
+  const target = document.getElementById('rosaContent');
+  if(target) setTimeout(()=> target.scrollIntoView({behavior:'smooth', block:'start'}), 30);
+}
 function addOpponentTeamAndSelect(){
   const t = addOpponentTeam();
-  if(t){ viewingTeamId = t.id; renderTeamSwitcher(); renderRosaTab(); updateBkStatus(); }
+  if(t){ viewingTeamId = t.id; showHistory = false; renderTeamSwitcher(); renderRosaTab(); updateBkStatus(); }
 }
 window.selectTeam = selectTeam;
 window.addOpponentTeamAndSelect = addOpponentTeamAndSelect;
 
+function renderHistoryPanel(){
+  let html = `<div class="strat-card" style="margin:0 0 12px;">
+    <h3 style="font-size:15px;">📜 Storico mosse</h3>
+    <div class="sub" style="font-size:12px;color:#6b7488;margin-bottom:10px;">Le ultime mosse dell'asta, più recenti in cima.</div>`;
+  if(moveLog.length===0){
+    html += `<div style="font-size:13px; color:#98a1b3; padding:6px 0;">Ancora nessuna mossa registrata.</div>`;
+  } else {
+    const recent = moveLog.slice().reverse().slice(0,80);
+    recent.forEach(m=>{
+      const time = new Date(m.ts).toLocaleTimeString('it-IT', {hour:'2-digit', minute:'2-digit'});
+      const who = m.status==='mine' ? 'da te' : (m.teamId ? teamName(m.teamId) : 'da altri (non specificato)');
+      const icon = m.azione==='preso' ? '✅' : '↩️';
+      const azioneTxt = m.azione==='preso' ? `preso ${who}` : `annullato (era ${who})`;
+      html += `<div class="fascia-player">
+        <span class="fp-name">${icon} <b>${m.nome}</b> <span class="fp-team">${m.squadraCalcio} · ${m.ruolo}</span></span>
+        <span style="text-align:right;">
+          <span class="fp-range" style="display:block;">${m.price}cr</span>
+          <span style="font-size:10.5px; color:#98a1b3;">${time} · ${azioneTxt}</span>
+        </span>
+      </div>`;
+    });
+  }
+  html += `</div>`;
+  return html;
+}
+
 function renderRosaTab(){
   renderTeamSwitcher();
+  if(showHistory){
+    document.getElementById('rosaContent').innerHTML = renderHistoryPanel();
+    return;
+  }
   const teamId = viewingTeamId;
   const {byRole, total, roster} = buildRosaData(teamId);
   const need = SLOTS.P+SLOTS.D+SLOTS.C+SLOTS.A;
