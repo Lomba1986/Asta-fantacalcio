@@ -994,22 +994,24 @@ function renderCallMode(){
     .filter(Boolean);
 
   // 2) Falli scannare: prezzo alto, ma esclusi non solo gli 8 già scelti da Best Team
-  // bensì tutta una "zona cuscinetto" di alternative plausibili subito sotto (il doppio
-  // degli slot di ruolo) — sono i piani B naturali se un obiettivo schizza di prezzo, e
-  // scannarli rischia di farceli portare via da un altro proprio mentre li usiamo da esca.
-  // Uso sia il ranking per FM sia quello per fvm, perché Best Team stesso sceglie titolari
-  // per FM e panchina per fvm: un'esclusione basata su un solo criterio ne perderebbe alcuni.
-  const shortlistSize = SLOTS[role] * 2;
-  const relevantRolePool = PLAYERS_DATA.filter(p=>p.r===role && p.rilevante && !p.nonInListone);
-  const byFM = relevantRolePool.filter(p=> STAT_BY_ID[p.id] && STAT_BY_ID[p.id].fantaMedia)
-    .sort((a,b)=> STAT_BY_ID[b.id].fantaMedia - STAT_BY_ID[a.id].fantaMedia)
-    .slice(0, shortlistSize).map(p=>p.id);
-  const byFvm = relevantRolePool.slice().sort((a,b)=> b.fvm - a.fvm)
-    .slice(0, shortlistSize).map(p=>p.id);
-  const shortlist = new Set([...pickedIds, ...byFM, ...byFvm]);
-  const scannare = free.filter(p=> !shortlist.has(p.id) && p.prezzo>=8)
-    .sort((a,b)=> b.prezzo-a.prezzo)
-    .slice(0,6);
+  // bensì chiunque valga almeno quanto il NOSTRO pick più debole in quel ruolo (per FM o
+  // per fvm, gli stessi due criteri con cui Best Team sceglie titolari e panchina) — sono
+  // i piani B naturali se un obiettivo schizza di prezzo, e scannarli rischia di farceli
+  // portare via da un altro proprio mentre li usiamo da esca. Criterio per soglia di valore,
+  // non per posizione in classifica: niente zone di confine fragili sui pareggi.
+  const pickedPlayers = bestPick.roster[role].map(x=> PLAYERS_DATA.find(p=>p.id===x.id)).filter(Boolean);
+  const pickedFMs = pickedPlayers.map(p=> STAT_BY_ID[p.id] ? STAT_BY_ID[p.id].fantaMedia : null).filter(v=>v!=null);
+  const pickedFvms = pickedPlayers.map(p=> p.fvm);
+  const minPickedFM = pickedFMs.length ? Math.min(...pickedFMs) : null;
+  const minPickedFvm = pickedFvms.length ? Math.min(...pickedFvms) : null;
+
+  const scannare = free.filter(p=>{
+    if(pickedIds.has(p.id) || p.prezzo<8) return false;
+    const pFM = STAT_BY_ID[p.id] ? STAT_BY_ID[p.id].fantaMedia : null;
+    if(minPickedFM!=null && pFM!=null && pFM >= minPickedFM) return false; // vale almeno quanto il nostro pick più debole per FM
+    if(minPickedFvm!=null && p.fvm >= minPickedFvm) return false; // idem per fvm
+    return true;
+  }).sort((a,b)=> b.prezzo-a.prezzo).slice(0,6);
 
   // 3) Robaccia: quasi gratis, buoni da chiamare per far passare il turno o coprire uno slot
   const robaccia = free.filter(p=> p.prezzo<=3)
