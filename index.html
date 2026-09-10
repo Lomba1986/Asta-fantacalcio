@@ -982,17 +982,32 @@ function renderCallMode(){
   const nOpp = opponentTeams.length;
   const needing = opponentsStillNeeding(role);
 
-  // 1) Miei obiettivi: qualità migliore ancora alla mia portata, con priorità a chi è nella mia lista fasce.
-  // Infortunati inclusi (li segnalo con un avviso): un top che rientra presto può restare un ottimo acquisto.
-  const myBudgetCap = Math.max(1, maxOfferNowValue());
-  const obiettivi = free.filter(p=>p.prezzo<=myBudgetCap)
-    .sort((a,b)=> (b.personal?1:0)-(a.personal?1:0) || b.prezzo-a.prezzo)
-    .slice(0,6);
+  // 1) Miei obiettivi: presi DIRETTAMENTE dal motore di Best Team per il modulo/versione
+  // scelti (stessi bestFormation/bestVersion della tab Best Team) — quindi si aggiorna da
+  // solo se cambi le percentuali obiettivo o se un giocatore viene battuto da qualcuno,
+  // esattamente come Best Team già fa.
+  const bestPick = buildBestRoster(bestFormation, bestVersion);
+  const pickedIds = new Set(bestPick.roster[role].map(x=>x.id));
+  const titolariIds = new Set(bestPick.roster[role].filter(x=>x.titolare).map(x=>x.id));
+  const obiettivi = bestPick.roster[role]
+    .map(x=> PLAYERS_DATA.find(p=>p.id===x.id))
+    .filter(Boolean);
 
-  // 2) Falli scannare: prezzo alto (nomi che smuovono un'asta), tra chi NON è in cima
-  // ai miei obiettivi, ordinati mettendo in evidenza chi serve a più squadre avversarie
-  const obiettiviIds = new Set(obiettivi.map(p=>p.id));
-  const scannare = free.filter(p=> !obiettiviIds.has(p.id) && p.prezzo>=8)
+  // 2) Falli scannare: prezzo alto, ma esclusi non solo gli 8 già scelti da Best Team
+  // bensì tutta una "zona cuscinetto" di alternative plausibili subito sotto (il doppio
+  // degli slot di ruolo) — sono i piani B naturali se un obiettivo schizza di prezzo, e
+  // scannarli rischia di farceli portare via da un altro proprio mentre li usiamo da esca.
+  // Uso sia il ranking per FM sia quello per fvm, perché Best Team stesso sceglie titolari
+  // per FM e panchina per fvm: un'esclusione basata su un solo criterio ne perderebbe alcuni.
+  const shortlistSize = SLOTS[role] * 2;
+  const relevantRolePool = PLAYERS_DATA.filter(p=>p.r===role && p.rilevante && !p.nonInListone);
+  const byFM = relevantRolePool.filter(p=> STAT_BY_ID[p.id] && STAT_BY_ID[p.id].fantaMedia)
+    .sort((a,b)=> STAT_BY_ID[b.id].fantaMedia - STAT_BY_ID[a.id].fantaMedia)
+    .slice(0, shortlistSize).map(p=>p.id);
+  const byFvm = relevantRolePool.slice().sort((a,b)=> b.fvm - a.fvm)
+    .slice(0, shortlistSize).map(p=>p.id);
+  const shortlist = new Set([...pickedIds, ...byFM, ...byFvm]);
+  const scannare = free.filter(p=> !shortlist.has(p.id) && p.prezzo>=8)
     .sort((a,b)=> b.prezzo-a.prezzo)
     .slice(0,6);
 
@@ -1001,7 +1016,7 @@ function renderCallMode(){
     .sort((a,b)=> b.fvm-a.fvm)
     .slice(0,6);
 
-  function group(title, emoji, players, note, accent){
+  function group(title, emoji, players, note, accent, showTitolarTag){
     let html = `<div class="strat-card" style="margin:0 0 12px;">
       <h3 style="font-size:14.5px; color:${accent};">${emoji} ${title}</h3>
       <div class="sub" style="font-size:12px; color:#6b7488; margin-bottom:10px;">${note}</div>`;
@@ -1009,11 +1024,16 @@ function renderCallMode(){
       html += `<div style="font-size:13px; color:#98a1b3; padding:6px 0;">Nessuno disponibile al momento in questo reparto.</div>`;
     } else {
       players.forEach(p=>{
+        const isFree = state[p.id].status==='free';
+        const titolareTag = showTitolarTag ? (titolariIds.has(p.id) ? '<span class="rig-badge" style="background:rgba(111,174,92,0.15); color:var(--green-ok); border-color:rgba(111,174,92,0.35);">titolare</span> ' : '<span class="rig-badge">panchina</span> ') : '';
+        const action = isFree
+          ? `<button class="btn mine" style="padding:5px 10px; font-size:12px;" onclick="quickTakeMine(${p.id})">Preso</button>`
+          : `<span style="font-size:11px; color:#98a1b3;">già preso</span>`;
         html += `<div class="fascia-player">
-          <span class="fp-name">${p.nome} <span class="fp-team">${p.squadra}</span>${p.personal ? ' 📝' : ''}${fmtInjuryInline(p)}</span>
+          <span class="fp-name">${titolareTag}${p.nome} <span class="fp-team">${p.squadra}</span>${p.personal ? ' 📝' : ''}${fmtInjuryInline(p)}</span>
           <span style="display:flex; align-items:center; gap:8px;">
             <span class="fp-range" style="color:var(--amber-deep); font-weight:700;">${p.prezzo}cr</span>
-            <button class="btn mine" style="padding:5px 10px; font-size:12px;" onclick="quickTakeMine(${p.id})">Preso</button>
+            ${action}
           </span>
         </div>`;
       });
@@ -1029,15 +1049,25 @@ function renderCallMode(){
     </div>
   </div>`;
 
+  html += `<div class="filters" style="padding:0 0 4px;">`;
+  ['4-4-2','3-4-3','4-3-3'].forEach(f=>{
+    html += `<button class="chip ${bestFormation===f?'active':''}" onclick="selectBestFormation('${f}'); renderCallMode();">${f}</button>`;
+  });
+  html += `</div><div class="filters" style="padding:0 0 10px;">`;
+  ['stelle','bilanciata'].forEach(v=>{
+    html += `<button class="chip ${bestVersion===v?'active':''}" onclick="selectBestVersion('${v}'); renderCallMode();">${VERSION_LABEL[v]}</button>`;
+  });
+  html += `</div>`;
+
   html += group('Miei Obiettivi', '🎯', obiettivi,
-    `Ancora liberi, ${ROLE_LABEL[role].toLowerCase()}, dentro il tuo massimo offribile attuale (${myBudgetCap}cr). Priorità a chi è nella tua lista fasce.`,
-    'var(--blue)');
+    `Presi dal motore di Best Team (${bestFormation}, ${VERSION_LABEL[bestVersion]}): si aggiornano da soli se cambi le percentuali obiettivo o se qualcuno viene battuto all'asta.`,
+    'var(--blue)', true);
   html += group('Falli Scannare', '⚔️', scannare,
-    needing>0 ? `Nomi pesanti ancora liberi — con ${needing} squadre ancora scoperte in questo reparto, chiamarli ora può accendere un rilancio a cui tu puoi anche non partecipare.` : `Nomi pesanti ancora liberi, ma al momento nessuna avversaria censita risulta ancora scoperta qui: il rilancio è meno garantito.`,
-    'var(--red)');
+    needing>0 ? `Nomi pesanti ancora liberi, esclusi anche i piani B più vicini ai miei obiettivi — con ${needing} squadre ancora scoperte in questo reparto, chiamarli ora può accendere un rilancio a cui tu puoi anche non partecipare, senza rischiare di bruciarti un'alternativa.` : `Nomi pesanti ancora liberi, ma al momento nessuna avversaria censita risulta ancora scoperta qui: il rilancio è meno garantito.`,
+    'var(--red)', false);
   html += group('Robaccia', '🗑️', robaccia,
     `Quasi gratis — buoni per far passare il turno, coprire uno slot, o far scendere in campo qualcun altro senza rischi.`,
-    '#8891a8');
+    '#8891a8', false);
 
   el.innerHTML = html;
 }
