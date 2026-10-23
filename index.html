@@ -221,6 +221,52 @@
   .form-chip{display:inline-block; font-size:11.5px; font-weight:700; padding:2px 7px; border-radius:7px;}
   .fc-green{background:#e3f6ea; color:#16804a;} .fc-amber{background:#fff3d6; color:#9a6a05;} .fc-red{background:#fde7e5; color:#c1392f;}
   .form-warn{margin-top:8px; padding:8px 10px; background:#fff3d6; color:#9a6a05; border-radius:8px; font-size:12.5px;}
+
+  /* campo della formazione: portiere in alto, colori dei ruoli come nell'app della lega */
+  .pitch{background:linear-gradient(180deg,#6fb85a 0%,#5aa349 50%,#6fb85a 100%); border-radius:16px; padding:10px 4px 4px; margin:8px 0 4px; position:relative; box-shadow:inset 0 0 0 2px rgba(255,255,255,.45);}
+  .pitch::before{content:""; position:absolute; left:10px; right:10px; top:50%; border-top:2px solid rgba(255,255,255,.3);}
+  .pitch-row{display:flex; justify-content:space-around; align-items:flex-start; margin:6px 0 14px; position:relative; z-index:1;}
+  .pdot{flex:1 1 0; min-width:0; text-align:center; padding:0 2px;}
+  .pdot b{display:flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:50%; margin:0 auto 4px; color:#fff; font-size:14px; font-weight:800; box-shadow:0 0 0 3px var(--ring,#fff);}
+  .pdot span{display:block; font-size:10.5px; font-weight:700; color:#fff; line-height:1.15; text-shadow:0 1px 2px rgba(0,0,0,.5); overflow-wrap:anywhere;}
+  .pdot i{display:block; font-style:normal; font-size:10px; color:rgba(255,255,255,.92); margin-top:1px; text-shadow:0 1px 2px rgba(0,0,0,.4);}
+  .pitch-bench{display:flex; gap:2px; padding:8px 2px; background:#5aa349; border-radius:12px; box-shadow:inset 0 0 0 2px rgba(255,255,255,.35);}
+  .pitch-bench .pdot span{font-size:9px; overflow-wrap:normal; word-break:normal; letter-spacing:-0.1px;}
+  .pitch-bench .pdot b{width:30px; height:30px; font-size:12px;}
+  .pitch-bench .pdot i{font-size:9px;}
+  #formContent .role-badge.role-P{background:#E9A93A; color:#fff;} #formContent .role-badge.role-D{background:#7AC142; color:#fff;}
+  #formContent .role-badge.role-C{background:#2F63E6; color:#fff;} #formContent .role-badge.role-A{background:#E03C46; color:#fff;}
+
+  /* campo in stile app ufficiale */
+  .pitch2{position:relative; width:100%; aspect-ratio:100/144; margin:14px 0 4px;}
+  .pgrass{position:absolute; inset:0; border-radius:14px; overflow:hidden; background:repeating-linear-gradient(180deg,#2f9f50 0 7.35%,#2b9249 7.35% 14.7%); box-shadow:inset 0 0 0 2px rgba(255,255,255,.25);}
+  .plines{position:absolute; inset:0; width:100%; height:100%;}
+  .fpill{position:absolute; left:50%; top:0; transform:translate(-50%,-50%); background:#fff; color:#12306b; font-weight:800; font-size:13px; padding:3px 11px; border-radius:9px; box-shadow:0 2px 6px rgba(0,0,0,.25); z-index:3;}
+  .prow{position:absolute; left:0; right:0; transform:translateY(-50%); display:flex; justify-content:space-around; align-items:flex-start; padding:0 4px; z-index:2;}
+  .pcard{flex:1 1 0; min-width:0; max-width:92px; text-align:center; padding:0 2px;}
+  .pav{position:relative; width:52px; height:52px; border-radius:50%; margin:0 auto 4px; display:flex; align-items:center; justify-content:center; box-shadow:0 0 0 3px rgba(255,255,255,.92), 0 3px 8px rgba(0,0,0,.35);}
+  .pav em{font-style:normal; font-size:11px; font-weight:800; color:#fff; letter-spacing:.3px; text-shadow:0 1px 3px rgba(0,0,0,.85);}
+  .pav u{position:absolute; left:-7px; top:-7px; width:20px; height:20px; border-radius:50%; color:#fff; font-size:11px; font-weight:800; text-decoration:none; display:flex; align-items:center; justify-content:center; box-shadow:0 0 0 2px #fff;}
+  .pn{display:block; font-size:11px; font-weight:800; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,.65); line-height:1.1; margin-top:3px; overflow-wrap:anywhere;}
+  .tb{height:7px; border-radius:4px; background:rgba(255,255,255,.55); margin:4px 6% 2px; overflow:hidden;}
+  .tb b{display:block; height:100%; border-radius:4px;}
+  .pvt{display:block; font-size:9.5px; color:rgba(255,255,255,.95); text-shadow:0 1px 2px rgba(0,0,0,.55);}
+  .bhead{font-weight:700; font-size:14px; margin:8px 0 6px;}
+  .bgrid{display:grid; grid-template-columns:repeat(4,1fr); gap:8px;}
+  .bcard{background:#e8edf7; border-radius:12px; padding:9px 2px 6px;}
+  .bcard .pav{width:44px; height:44px; box-shadow:0 0 0 3px #fff, 0 2px 6px rgba(0,0,0,.2);}
+  .bcard .pav em{font-size:10px;} .bcard .pav u{width:18px; height:18px; font-size:10px; left:-6px; top:-6px;}
+  .bcard .pn{color:#12306b; text-shadow:none; font-size:10.5px;}
+  .bcard .tb{background:#cfd7e6;}
+  .bcard .pvt{color:#6b7488; text-shadow:none; font-size:9px;}
+  @media (max-width:390px){
+    .pitch2 .pav{width:44px; height:44px;}
+    .pitch2 .pav em{font-size:10px;} .pitch2 .pav u{width:18px; height:18px; font-size:10px; left:-6px; top:-6px;}
+    .pitch2 .pn{font-size:10px;} .pitch2 .tb{height:6px; margin:3px 6% 1px;} .pitch2 .pvt{font-size:9px;}
+  }
+  @media (max-width:340px){
+    .pitch2 .pav{width:38px; height:38px;} .pitch2 .pn{font-size:9.5px;} .pitch2 .pvt{display:none;}
+  }
   #formContent{padding:10px 12px 90px;}
   .role-badge{
     display:inline-block; width:20px; height:20px; line-height:20px; text-align:center;
@@ -320,8 +366,8 @@
   /* ===== TABS ===== */
   .tabpanel{padding-bottom:100px;}
   /* app installata sul telefono (schermata Home): lascia spazio sotto, dove ci sono l'angolo arrotondato e la linea di Home */
-  html.standalone #tabbar{padding-bottom:max(calc(10px + env(safe-area-inset-bottom)), 30px);}
-  html.standalone .tabpanel{padding-bottom:118px;}
+  html.standalone #tabbar{padding-bottom:max(calc(10px + env(safe-area-inset-bottom)), 36px);}
+  html.standalone .tabpanel{padding-bottom:124px;}
   /* fuori dalla tab Asta il riquadro del budget non serve: header compatto e non fisso */
   body.compact #budgetbar{position:static;}
   body.compact #statsCard, body.compact #extraPanel{display:none;}
@@ -330,13 +376,13 @@
     position:fixed; left:0; right:0; bottom:0; z-index:80;
     display:flex; gap:2px; background:#ffffff;
     border-top:1px solid var(--border);
-    padding:6px max(20px, env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+    padding:6px max(24px, env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) max(24px, env(safe-area-inset-left));
     box-shadow:0 -4px 18px rgba(30,50,120,0.10);
   }
   .tabbtn{
-    flex:1; min-width:0; display:flex; flex-direction:column; align-items:center; gap:3px;
+    flex:1 1 auto; min-width:0; display:flex; flex-direction:column; align-items:center; gap:3px;
     background:none; border:none; color:#9aa2b5; font-family:var(--sans);
-    font-size:clamp(10px, 2.9vw, 11.5px); font-weight:600; padding:7px 2px 6px; border-radius:10px; cursor:pointer;
+    font-size:clamp(10px, 2.9vw, 11.5px); font-weight:600; padding:7px 6px 6px; border-radius:10px; cursor:pointer;
     white-space:nowrap;
   }
   .tabbtn .ti{font-size:21px; line-height:1;}
@@ -1487,6 +1533,8 @@ function buildBackupPayload(){
     autoBackupEnabled: autoBackupEnabled,
     autoBackupEvery: autoBackupEvery,
     moveLog: moveLog,
+    weekData: (typeof weekOverride!=='undefined' ? weekOverride : null),
+    formSettings: (typeof formSettings!=='undefined' ? formSettings : null),
     state: state
   };
 }
@@ -1567,6 +1615,17 @@ function applyBackupPayload(payload){
       if(state.hasOwnProperty(id)) state[id] = payload.state[idStr];
     });
   }
+  // dati della formazione: si recuperano solo se più recenti di quelli già presenti
+  try{
+    const w = payload.weekData;
+    if(w && w.teams && w.players){
+      const t = s=>{ const n=Date.parse(s||''); return isNaN(n)?0:n; };
+      const cur = weekOverride;
+      if(!cur || w.giornata>cur.giornata || (w.giornata===cur.giornata && t(w.generatedAt)>=t(cur.generatedAt))){ weekOverride = w; formPersist('weekData', w); }
+    }
+    const fs = payload.formSettings;
+    if(fs && fs.v===2){ formSettings = Object.assign(formSettings, fs, {allowed:Object.assign(formSettings.allowed, fs.allowed||{}), bench:formSettings.bench}); formPersist('formSettings', formSettings); }
+  }catch(e){}
   viewingTeamId = 'mine';
   lastSaveAt = payload.savedAt ? new Date(payload.savedAt) : new Date();
   actionsSinceSave = 0;
@@ -1575,6 +1634,7 @@ function applyBackupPayload(payload){
   if(currentTab==='rosa') renderRosaTab();
   if(currentTab==='strategia') renderStrategiaTab();
   if(currentTab==='best') renderBestTab();
+  if(currentTab==='form') renderFormTab();
   updateBkStatus();
 }
 function loadBackupFile(file){
@@ -1635,8 +1695,12 @@ const FORM_MODULES = {
   '3-5-2':{D:3,C:5,A:2}, '4-5-1':{D:4,C:5,A:1}, '5-3-2':{D:5,C:3,A:2}, '5-4-1':{D:5,C:4,A:1}
 };
 let formSettings = {
-  allowed:{'4-4-2':true,'4-3-3':true,'3-4-3':true,'3-5-2':false,'4-5-1':false,'5-3-2':false,'5-4-1':false},
-  need4D:true, benchSize:7, benchGK:true, maxSubs:3, prudence:2
+  v:2,
+  // regole della lega (dalle schermate di "Rose e formazioni"): 7 moduli consentiti,
+  // panchina fissa 1 P + 2 D + 2 C + 2 A, fino a 5 cambi, modificatore difesa attivo,
+  // inserimento formazione fino a 1 minuto prima del primo calcio d'inizio
+  allowed:{'4-4-2':true,'4-3-3':true,'3-4-3':true,'3-5-2':true,'4-5-1':true,'5-3-2':true,'5-4-1':true},
+  need4D:false, bench:{P:1,D:2,C:2,A:2}, maxSubs:5, prudence:2, modifier:true, lockMin:1
 };
 let weekOverride = null;
 const FORM_N = 2500;
@@ -1656,16 +1720,54 @@ async function idbGetKey(key){
   const db = await idbOpen();
   return new Promise((res,rej)=>{ const tx=db.transaction('saves','readonly'); const rq=tx.objectStore('saves').get(key); rq.onsuccess=()=>res(rq.result||null); rq.onerror=()=>rej(rq.error); });
 }
+function formPersist(key, val){
+  try{ localStorage.setItem('astaFanta_'+key, JSON.stringify(val)); }catch(e){}
+  idbPutKey(key, val).catch(()=>{});
+}
+function formLsGet(key){ try{ const s = localStorage.getItem('astaFanta_'+key); return s ? JSON.parse(s) : null; }catch(e){ return null; } }
+function formWeekNewer(a, b){
+  if(!b) return true;
+  if(a.giornata!==b.giornata) return a.giornata>b.giornata;
+  const t = s=>{ const n=Date.parse(s||''); return isNaN(n)?0:n; };
+  return t(a.sourceGeneratedAt||a.generatedAt) >= t(b.sourceGeneratedAt||b.generatedAt);
+}
+function formMergeSettings(s){
+  if(s && s.v===2) formSettings = Object.assign(formSettings, s, {allowed:Object.assign(formSettings.allowed, s.allowed||{}), bench:formSettings.bench});
+}
 async function loadFormPrefs(){
+  // 1) copia di riserva nel telefono (risposta immediata, non può restare in attesa)
+  const w0 = formLsGet('weekData'); if(w0 && w0.teams && w0.players) weekOverride = w0;
+  formMergeSettings(formLsGet('formSettings'));
+  if(currentTab==='form') renderFormTab();
+  // 2) memoria principale dell'app: se risponde ed è più recente prevale; se non risponde si va avanti senza
+  const waitMax = (p,ms)=>Promise.race([p, new Promise(r=>setTimeout(()=>r(null),ms))]);
   try{
-    const w = await idbGetKey('weekData'); if(w && w.teams && w.players) weekOverride = w;
-    const s = await idbGetKey('formSettings'); if(s) formSettings = Object.assign(formSettings, s, {allowed:Object.assign(formSettings.allowed, s.allowed||{})});
+    const w = await waitMax(idbGetKey('weekData').catch(()=>null), 2500);
+    if(w && w.teams && w.players && formWeekNewer(w, weekOverride)) weekOverride = w;
+    const s = await waitMax(idbGetKey('formSettings').catch(()=>null), 2500);
+    formMergeSettings(s);
   }catch(e){}
+  try{ if(navigator.storage && navigator.storage.persist) navigator.storage.persist(); }catch(e){}
   if(currentTab==='form') renderFormTab();
 }
-function formSave(){ idbPutKey('formSettings', formSettings).catch(()=>{}); }
+function formSave(){ formPersist('formSettings', formSettings); }
 
 /* ---------- dati per giocatore ---------- */
+
+// Statistiche dell'app ufficiale della lega (schermate "Rosa" del 23/10 ore 12:30).
+// mv = media voto, fm = fantamedia con i bonus della lega, tit = titolarità indicata dall'app ufficiale, inj = infortunato
+const FORM_STATS_DATE = '23/10 ore 12:30';
+const FORM_STATS = {
+ 'Caprile|Cagliari':{mv:6.43,fm:5.43,tit:90}, 'De Gea|Fiorentina':{mv:5.79,fm:3.29,tit:90}, 'Skorupski|Bologna':{mv:5.7,fm:4.1,tit:75},
+ 'Carlos Augusto|Inter':{mv:6.9,fm:8.4,tit:60}, 'Di Lorenzo|Napoli':{mv:6,fm:6.07,tit:90}, 'Diego Carlos|Parma':{mv:5.4,fm:5.3,tit:60},
+ 'Dimarco|Inter':{mv:6.14,fm:6.29,tit:55}, 'Dodò|Fiorentina':{mv:5.5,fm:5.5,tit:50}, 'Favasuli|Napoli':{mv:6.75,fm:7.25,inj:true},
+ 'Miranda J.|Bologna':{mv:6.25,fm:6.5,tit:90}, 'Wesley|Roma':{mv:6.6,fm:6.8,tit:90},
+ 'Alajbegovic|Juventus':{mv:6,fm:6.17,tit:60}, 'Atta|Fiorentina':{mv:5.4,fm:5.4,inj:true}, 'Casadei|Torino':{mv:5.5,fm:5.5,tit:55},
+ 'Colpani|Monza':{mv:5.9,fm:6.5,tit:55}, 'Cristante|Roma':{mv:6.3,fm:6.3,tit:55}, 'De Bruyne|Napoli':{mv:6.36,fm:7.36,tit:90},
+ 'Diouf|Inter':{mv:6.42,fm:6.92,tit:90}, 'Sucic P.|Inter':{mv:6.17,fm:6.67,tit:60},
+ 'Bonny|Inter':{mv:6.5,fm:8,tit:60}, 'Castro S.|Roma':{mv:6.2,fm:6.8,tit:55}, 'Dovbyk|Bologna':{mv:5.75,fm:6.38,tit:60},
+ 'Raimondo|Frosinone':{mv:6.71,fm:9.57,tit:90}, 'Scamacca|Atalanta':{mv:6,fm:6.5,tit:60}, 'Zeballos|Monza':{mv:6,fm:7.5,tit:60}
+};
 function formLeagueAvg(wk){
   const ts = Object.values(wk.teams||{}).filter(t=>t.gf!=null && t.pj);
   if(!ts.length) return null;
@@ -1690,58 +1792,95 @@ function formPlayers(){
     const d = (wk.players||{})[p.id] || null;
     const st = STAT_BY_ID[p.id] || {};
     const inj = INJURY_BY_ID[p.id];
+    const off = FORM_STATS[p.nome+'|'+p.squadra] || null;
     const nPres = st.presenzeReali || 0, prior = st.fantamediaAttesa || st.fantaMedia || 6;
-    const fmRaw = (d && d.fm!=null) ? d.fm : ((nPres>0 && st.fantaMedia) ? st.fantaMedia : prior);
-    // poche presenze = dato poco affidabile: lo si "tira" verso l'attesa pre-campionato (peso di 3 partite)
-    const fm = (d && d.fm!=null) ? d.fm : ((nPres>0 && st.fantaMedia) ? (nPres*st.fantaMedia + 3*prior)/(nPres+3) : prior);
+    let fmRaw, fm;
+    if(d && d.fm!=null){ fmRaw = fm = +d.fm; }
+    else if(off){ fmRaw = off.fm; fm = (3*off.fm + 3*prior)/6; }          // pochi match: si tiene a metà strada con l'attesa pre-campionato
+    else if(nPres>0 && st.fantaMedia){ fmRaw = st.fantaMedia; fm = (nPres*st.fantaMedia + 3*prior)/(nPres+3); }
+    else { fmRaw = fm = prior; }
+    const mvRaw = (d && d.mv!=null) ? +d.mv : (off ? off.mv : null);
     let out = !!(d && d.out), pStart, pSub, note = d ? (d.note||'') : '';
     if(d){ pStart = out ? 0 : d.pStart; pSub = out ? 0 : d.pSub; }
     else if(inj && inj.squalificato){ out = true; pStart = 0; pSub = 0; note = 'Squalificato'; }
+    else if(off && off.inj){ out = true; pStart = 0; pSub = 0; note = 'Infortunato (app ufficiale)'; }
     else if(inj){ pStart = 0.2; pSub = 0.2; note = inj.tipo; }
+    else if(off && off.tit!=null){ pStart = off.tit/100; pSub = 0.35; note = "Stima dall'app ufficiale ("+off.tit+"%)"; }
     else { pStart = 0.5; pSub = 0.5; note = 'Nessun dato per questa giornata'; }
     const pVote = pStart + (1-pStart)*pSub;
     const t = (wk.teams||{})[p.squadra] || {};
-    return {id:p.id, nome:p.nome, r:p.r, squadra:p.squadra, fm, fmRaw, adj: fm + formMatchupAdj(p, wk, avg),
-            pStart, pSub, pVote, out, note, opp:t.opp, home:t.home, kickoff:t.kickoff, pWin:t.pWin};
+    const mu = formMatchupAdj(p, wk, avg);
+    const adj = fm + mu;
+    // voto base atteso (serve al modificatore difesa): media voto ufficiale ammorbidita, altrimenti stimata dal fantavoto
+    const bm = mvRaw!=null ? (3*mvRaw + 2*FORM_B0)/5 + 0.8*mu : FORM_B0 + FORM_BSHR*(adj + FORM_BOFF[p.r] - FORM_B0);
+    return {id:p.id, nome:p.nome, r:p.r, squadra:p.squadra, fm, fmRaw, mvRaw, off, adj, bm, pStart, pSub, pVote, out, note, opp:t.opp, home:t.home, kickoff:t.kickoff, pWin:t.pWin};
   });
 }
 
 /* ---------- simulazione ---------- */
 function formRng(seed){ let a=seed>>>0; return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
-function formUniforms(M){ const r=formRng(20261016), U=new Float32Array(FORM_N*M); for(let k=0;k<U.length;k++) U[k]=r(); return U; }
-function formSim(pl, S, B, U, M, maxSubs){
-  let tot=0, full=0;
-  for(let s=0;s<FORM_N;s++){
-    const base=s*M; let pts=0, cnt=0; const miss={P:0,D:0,C:0,A:0};
-    for(let k=0;k<S.length;k++){ const i=S[k]; if(U[base+i]<pl[i].pVote){ pts+=pl[i].adj; cnt++; } else miss[pl[i].r]++; }
+const FORM_NMAX = 5000, FORM_NSEARCH = 1200;
+// per ruolo: [variazione del voto base, variazione dovuta a bonus/malus]
+const FORM_SIG  = {P:[0.55,1.0], D:[0.5,0.8], C:[0,1.3], A:[0,1.7]};
+// voto base atteso = fantavoto atteso + scarto (il portiere perde punti per i gol subiti, il difensore ne guadagna pochi con i bonus)
+const FORM_BOFF = {P:0.9, D:-0.15, C:0, A:0};
+const FORM_B0 = 6.05, FORM_BSHR = 0.85; // i voti base si avvicinano alla media del campionato (pochi dati = meno estremi)
+function formUniforms(M){
+  const r = formRng(20261016), n = FORM_NMAX*M;
+  const U = new Float32Array(n), Z1 = new Float32Array(n), Z2 = new Float32Array(n);
+  const g = ()=>{ let u=0; while(u===0) u=r(); return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*r()); };
+  for(let k=0;k<n;k++){ U[k]=r(); Z1[k]=g(); Z2[k]=g(); }
+  return {U,Z1,Z2};
+}
+let formRC = {M:0, R:null};
+function formRCache(M){ if(formRC.M!==M){ formRC = {M, R:formUniforms(M)}; } return formRC.R; }
+function formSim(pl, S, B, R, M, maxSubs, N){
+  const {U,Z1,Z2} = R; let tot=0, full=0, modTot=0; const modC=[0,0,0,0];
+  for(let s=0;s<N;s++){
+    const base=s*M; let pts=0, cnt=0, gkB=-99; const dArr=[]; const miss={P:0,D:0,C:0,A:0};
+    const add = i=>{
+      const p=pl[i], sg=FORM_SIG[p.r], z1=Z1[base+i], z2=Z2[base+i];
+      pts += p.adj + sg[0]*z1 + sg[1]*z2; cnt++;
+      if(p.r==='P') gkB = p.bm + sg[0]*z1;
+      else if(p.r==='D') dArr.push(p.bm + sg[0]*z1);
+    };
+    for(let k=0;k<S.length;k++){ const i=S[k]; if(U[base+i]<pl[i].pVote) add(i); else miss[pl[i].r]++; }
     let subs=0;
-    for(let k=0;k<B.length && subs<maxSubs;k++){ const j=B[k]; if(miss[pl[j].r]>0 && U[base+j]<pl[j].pVote){ pts+=pl[j].adj; cnt++; miss[pl[j].r]--; subs++; } }
+    for(let k=0;k<B.length && subs<maxSubs;k++){ const j=B[k]; if(miss[pl[j].r]>0 && U[base+j]<pl[j].pVote){ add(j); miss[pl[j].r]--; subs++; } }
+    // modificatore difesa: media del voto base di portiere + 3 migliori difensori, solo con portiere e almeno 4 difensori con voto
+    let mod=0;
+    if(formSettings.modifier && gkB>-90 && dArr.length>=4){
+      dArr.sort((x,y)=>y-x); const m=(gkB+dArr[0]+dArr[1]+dArr[2])/4;
+      mod = m>=7 ? 6 : (m>=6.5 ? 3 : (m>=6 ? 1 : 0));
+    }
+    pts += mod; modTot += mod; modC[mod===6?3:(mod===3?2:(mod===1?1:0))]++;
     tot+=pts; if(cnt===S.length) full++;
   }
-  return {E:tot/FORM_N, p11:full/FORM_N};
+  return {E:tot/N, p11:full/N, mod:modC.map(c=>c/N), modE:modTot/N};
 }
-function formBuild(pl, mod, U, st){
+function formBuild(pl, mod, R, st){
   const need = FORM_MODULES[mod], M = pl.length;
   const ok = i=>pl[i].pVote>0, score = i=>pl[i].adj*pl[i].pVote;
   const all = pl.map((_,i)=>i);
   const quota = {P:1, D:need.D, C:need.C, A:need.A};
-  let starters = [];
+  let starters = [], bench = [];
   for(const r of ['P','D','C','A']){
     const pool = all.filter(i=>pl[i].r===r && ok(i)).sort((a,b)=>score(b)-score(a));
     if(pool.length<quota[r]) return null;
     starters.push(...pool.slice(0,quota[r]));
   }
   const orderB = b=>b.slice().sort((x,y)=>pl[y].adj-pl[x].adj);
-  const evalL = (S,B)=>formSim(pl,S,orderB(B),U,M,st.maxSubs);
+  const evalL = (S,B,n)=>formSim(pl,S,orderB(B),R,M,st.maxSubs,n||FORM_NSEARCH);
   const obj = r=>r.E - st.prudence*(1-r.p11)*6;
-  let bench = [];
   const rest = ()=>all.filter(i=>ok(i) && !starters.includes(i) && !bench.includes(i));
-  if(st.benchGK){ const g = rest().filter(i=>pl[i].r==='P').sort((a,b)=>score(b)-score(a))[0]; if(g!==undefined) bench.push(g); }
-  while(bench.length<st.benchSize){
-    const c = rest(); if(!c.length) break;
-    let best=c[0], bo=-1e9;
-    for(const x of c){ const o=obj(evalL(starters,[...bench,x])); if(o>bo+1e-9){ bo=o; best=x; } }
-    bench.push(best);
+  // panchina con la forma fissata dalla lega (es. 1 P, 2 D, 2 C, 2 A): per ogni posto si sceglie il migliore del ruolo
+  for(const r of ['P','D','C','A']){
+    for(let k=0;k<(st.bench[r]||0);k++){
+      const c = rest().filter(i=>pl[i].r===r); if(!c.length) break;
+      let best=c[0], bo=-1e9;
+      for(const x of c){ const o=obj(evalL(starters,[...bench,x])); if(o>bo+1e-9){ bo=o; best=x; } }
+      bench.push(best);
+    }
   }
   let cur = evalL(starters,bench), curO = obj(cur), guard=0, improved=true;
   while(improved && guard++<3){
@@ -1755,31 +1894,41 @@ function formBuild(pl, mod, U, st){
       }
     }
   }
-  // un passaggio di rifinitura sulla panchina: scambia un panchinaro con un escluso se migliora in modo netto
-  let again = true, g2 = 0;
+  let again=true, g2=0;
   while(again && g2++<2){
-    again = false;
+    again=false;
     for(let k=0;k<bench.length;k++){
-      if(st.benchGK && k===0 && pl[bench[0]].r==='P') continue;
-      for(const n of rest()){
+      const r=pl[bench[k]].r;
+      for(const n of rest().filter(i=>pl[i].r===r)){
         const B2=bench.slice(); B2[k]=n; const res=evalL(starters,B2), o=obj(res);
         if(o>curO+0.15){ bench=B2; cur=res; curO=o; again=true; break; }
       }
     }
   }
-  return {mod, starters, bench:orderB(bench), E:cur.E, p11:cur.p11, obj:curO};
+  const fin = evalL(starters, bench, FORM_NMAX);   // valutazione finale con più scenari
+  return {mod, starters, bench:orderB(bench), E:fin.E, p11:fin.p11, modP:fin.mod, modE:fin.modE, obj:obj(fin)};
+}
+let formCache = {key:'', out:null};
+function formKeyNow(){
+  const pl = formPlayers(), wk = currentWeek();
+  return JSON.stringify([formSettings, wk.giornata, wk.generatedAt, pl.map(p=>[p.id,p.pStart,p.pSub,p.out,+p.fm.toFixed(2),+p.adj.toFixed(2),+p.bm.toFixed(2)])]);
 }
 function formCompute(){
-  const pl = formPlayers(), U = formUniforms(pl.length);
+  const pl = formPlayers();
+  const wk = currentWeek();
+  const key = formKeyNow();
+  if(formCache.key===key && formCache.out) return formCache.out;
+  const R = formRCache(pl.length);
   const mods = Object.keys(FORM_MODULES).filter(m=>formSettings.allowed[m] && (!formSettings.need4D || FORM_MODULES[m].D>=4));
-  const results = mods.map(m=>formBuild(pl,m,U,formSettings)).filter(Boolean).sort((a,b)=>b.obj-a.obj);
-  return {pl, results};
+  const results = mods.map(m=>formBuild(pl,m,R,formSettings)).filter(Boolean).sort((a,b)=>b.obj-a.obj);
+  formCache = {key, out:{pl, results}};
+  return formCache.out;
 }
 
 /* ---------- interfaccia ---------- */
 function formKick(iso){ if(!iso) return ''; return new Date(iso).toLocaleString('it-IT',{weekday:'short',day:'numeric',hour:'2-digit',minute:'2-digit',timeZone:'Europe/Rome'}); }
 function formCountdown(iso){
-  const ms = new Date(iso).getTime() - Date.now();
+  const ms = new Date(iso).getTime() - (formSettings.lockMin||0)*60000 - Date.now();
   if(ms<=0) return {txt:'formazione chiusa', late:true};
   const m = Math.floor(ms/60000), d = Math.floor(m/1440), h = Math.floor((m%1440)/60), mm = m%60;
   return {txt:'chiude tra '+(d>0?d+'g ':'')+h+'h '+mm+'min', late:false, urgent:ms<3*3600*1000};
@@ -1790,19 +1939,59 @@ function formChip(p){
 }
 function formRow(p){
   const opp = p.opp ? `vs ${p.opp}${p.home?' (casa)':' (trasf.)'} · ${formKick(p.kickoff)}${p.pWin!=null?' · vince '+Math.round(p.pWin*100)+'%':''}` : '';
+  const offT = (p.off && p.off.tit!=null) ? ` · app ufficiale ${p.off.tit}%` : '';
+  const stats = (p.mvRaw!=null ? 'MV '+p.mvRaw.toFixed(2)+' · ' : '') + 'FM '+p.fmRaw.toFixed(2);
   return `<div class="fascia-player" style="align-items:flex-start;">
     <span class="fp-name"><span class="role-badge role-${p.r}">${p.r}</span> ${p.nome} <span class="fp-team">${p.squadra}</span>
       <div class="form-sub">${opp}</div>${p.note?`<div class="form-sub" style="color:#6b7488;">${p.note}</div>`:''}</span>
-    <span style="text-align:right; white-space:nowrap;">${formChip(p)}<div class="form-sub">titolare ${Math.round(p.pStart*100)}% · FM ${p.fmRaw.toFixed(1)}</div></span></div>`;
+    <span style="text-align:right; white-space:nowrap;">${formChip(p)}<div class="form-sub">titolare ${Math.round(p.pStart*100)}%${offT}</div><div class="form-sub">${stats}</div></span></div>`;
+}
+const FORM_KIT = {
+  Atalanta:['#111827','#1f6fc4','s'], Bologna:['#1b2f5e','#b3262f','s'], Cagliari:['#a51e36','#0d2b5e','s'], Como:['#2b6cb0','#2b6cb0','o'],
+  Fiorentina:['#5b2d8c','#5b2d8c','o'], Frosinone:['#f2c230','#1c4c9a','s'], Genoa:['#b3262f','#0d2b5e','h'], Inter:['#0b0b0b','#1b5db4','s'],
+  Juventus:['#111111','#e9e9e9','s'], Lazio:['#7fb9e0','#7fb9e0','o'], Lecce:['#f2c230','#c1272d','s'], Milan:['#c1272d','#111111','s'],
+  Monza:['#c1272d','#eeeeee','h'], Napoli:['#2b8fd6','#2b8fd6','o'], Parma:['#f5d33f','#1c3f8a','s'], Roma:['#8b1e2d','#f4a300','h'],
+  Sassuolo:['#2f9e44','#111111','s'], Torino:['#7a1e2b','#7a1e2b','o'], Udinese:['#111111','#e9e9e9','s'], Venezia:['#0b6b3a','#e07a1f','s']
+};
+function formKitBg(club){
+  const k = FORM_KIT[club] || ['#4b5563','#4b5563','o'];
+  if(k[2]==='s') return `repeating-linear-gradient(90deg, ${k[0]} 0 8px, ${k[1]} 8px 16px)`;
+  if(k[2]==='h') return `linear-gradient(90deg, ${k[0]} 50%, ${k[1]} 50%)`;
+  return k[0];
+}
+function formBarCol(x){ return x>=0.75 ? '#4cd137' : (x>=0.45 ? '#f0a030' : '#9fb0cc'); }
+function formCard(p, sub){
+  const col = {P:'#E9A93A', D:'#7AC142', C:'#2F63E6', A:'#E03C46'}[p.r];
+  const pc = Math.round(p.pStart*100);
+  return `<div class="pcard"><div class="pav" style="background:${formKitBg(p.squadra)}"><em>${p.squadra.slice(0,3).toUpperCase()}</em><u style="background:${col}">${p.r}</u></div>
+    <span class="pn">${p.nome}</span><div class="tb"><b style="width:${Math.max(6,pc)}%;background:${formBarCol(p.pStart)}"></b></div><span class="pvt">${sub}</span></div>`;
+}
+function formPitch(S, B, mod){
+  const top = {P:14, D:36, C:58.5, A:81};
+  const row = r=>`<div class="prow" style="top:${top[r]}%">${S.filter(p=>p.r===r).sort((a,b)=>b.adj*b.pVote-a.adj*a.pVote).map(p=>formCard(p,'voto '+Math.round(p.pVote*100)+'%')).join('')}</div>`;
+  const lines = `<svg class="plines" viewBox="0 0 100 144" preserveAspectRatio="none" aria-hidden="true"><g fill="none" stroke="rgba(255,255,255,.55)" stroke-width="0.7">
+    <rect x="3" y="3" width="94" height="138" rx="1.5"/><line x1="3" y1="72" x2="97" y2="72"/><circle cx="50" cy="72" r="9.5"/>
+    <rect x="24" y="3" width="52" height="24"/><rect x="38" y="3" width="24" height="10"/><rect x="24" y="117" width="52" height="24"/><rect x="38" y="131" width="24" height="10"/></g></svg>`;
+  return `<div class="pitch2"><div class="pgrass">${lines}</div><div class="fpill">${mod}</div>${row('P')}${row('D')}${row('C')}${row('A')}</div>
+    <div class="form-sub" style="margin:2px 2px 6px;">Portiere in alto, come nella tua lega. La barra è la probabilità di partire titolare (verde alta, arancione media, grigia bassa); «voto» è la probabilità di prendere voto, anche subentrando.</div>
+    <div class="bhead">🪑 Panchina, in ordine di ingresso</div>
+    <div class="bgrid">${B.map((p,k)=>`<div class="bcard">${formCard(p,(k+1)+'° · voto '+Math.round(p.pVote*100)+'%')}</div>`).join('')}</div>`;
 }
 function renderFormTab(){
+  const el = document.getElementById('formContent'); if(!el) return;
+  if(formCache.out && formCache.key === formKeyNow()) return renderFormTabNow();
+  // il calcolo richiede circa un secondo: si mostra subito un messaggio, poi si calcola
+  el.innerHTML = '<div class="strat-card"><div style="font-size:14px;">⏳ Calcolo della formazione in corso…</div><div class="form-sub">Sto simulando migliaia di scenari per ogni modulo.</div></div>';
+  setTimeout(renderFormTabNow, 40);
+}
+function renderFormTabNow(){
   const el = document.getElementById('formContent'); if(!el) return;
   const wk = currentWeek();
   const {pl, results} = formCompute();
   const cd = wk.lockAt ? formCountdown(wk.lockAt) : null;
   let html = `<div class="strat-card" style="margin:0 0 12px;">
     <h3>⚽ Formazione — ${wk.giornata}ª giornata</h3>
-    <div class="sub" style="font-size:12px;color:#6b7488;">${cd ? `<b style="color:${cd.late?'var(--red)':(cd.urgent?'var(--red)':'var(--green-ok)')};">${cd.txt}</b> (primo calcio d'inizio: ${formKick(wk.lockAt)})<br>` : ''}Dati aggiornati: ${wk.generatedAt ? new Date(wk.generatedAt).toLocaleString('it-IT',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',timeZone:'Europe/Rome'}) : 'n/d'}</div>`;
+    <div class="sub" style="font-size:12px;color:#6b7488;">${cd ? `<b style="color:${cd.late?'var(--red)':(cd.urgent?'var(--red)':'var(--green-ok)')};">${cd.txt}</b> (primo calcio d'inizio: ${formKick(wk.lockAt)}; la lega chiude l'inserimento ${formSettings.lockMin} min prima)<br>` : ''}Dati aggiornati: ${wk.generatedAt ? new Date(wk.generatedAt).toLocaleString('it-IT',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',timeZone:'Europe/Rome'}) : 'n/d'} · ${wk===weekOverride ? 'incollati da te, salvati su questo dispositivo' : 'dati incorporati nell\'app'}</div>`;
   if(wk.lockAt && Date.now() > new Date(wk.lockAt).getTime() + 4*86400000){
     html += `<div class="form-warn">⚠️ Questi dati sono di una giornata passata. Apri «Aggiorna i dati della giornata» qui sotto per caricare quelli della prossima.</div>`;
   }
@@ -1813,27 +2002,34 @@ function renderFormTab(){
   } else {
     const best = results[0], S = best.starters.map(i=>pl[i]), B = best.bench.map(i=>pl[i]);
     const pc = Math.round(best.p11*100), pcls = pc>=90?'fc-green':(pc>=75?'fc-amber':'fc-red');
+    const mp = best.modP.map(x=>Math.round(x*100));
     html += `<div class="strat-card" style="margin:0 0 12px;">
       <h3>🏆 Modulo consigliato: ${best.mod}</h3>
-      <div style="display:flex; gap:8px; flex-wrap:wrap; margin:6px 0 10px;">
+      <div style="display:flex; gap:8px; flex-wrap:wrap; margin:6px 0 6px;">
         <span class="form-chip ${pcls}" style="font-size:12.5px;">Giocare in 11: ${pc}%</span>
         <span class="form-chip fc-amber" style="font-size:12.5px;">Punti attesi ~${best.E.toFixed(1)}</span>
-      </div>`;
+        ${formSettings.modifier ? `<span class="form-chip fc-green" style="font-size:12.5px;">Modificatore difesa ~+${best.modE.toFixed(1)}</span>` : ''}
+      </div>
+      ${formSettings.modifier ? `<div class="form-sub" style="margin:0 0 8px;">Modificatore: nessuno ${mp[0]}% · +1 ${mp[1]}% · +3 ${mp[2]}% · +6 ${mp[3]}% (i punti attesi lo includono)</div>` : ''}
+      ${formPitch(S, B, best.mod)}
+    </div>
+    <details class="strat-card" style="margin:0 0 12px;" open>
+      <summary style="font-weight:700;font-size:15px;cursor:pointer;">📋 Dettaglio titolari</summary>`;
     for(const r of ['P','D','C','A']){
       const grp = S.filter(p=>p.r===r).sort((a,b)=>b.adj*b.pVote-a.adj*a.pVote);
       html += `<div class="fascia-title" style="margin-top:8px;">${{P:'Portiere',D:'Difensori',C:'Centrocampisti',A:'Attaccanti'}[r]}</div>` + grp.map(formRow).join('');
     }
-    html += `</div><div class="strat-card" style="margin:0 0 12px;"><h3>🪑 Panchina, in ordine di ingresso</h3>
-      <div class="sub" style="font-size:12px;color:#6b7488;margin-bottom:6px;">Entra il primo del ruolo che ha preso voto (max ${formSettings.maxSubs} cambi). Chi ha più probabilità di giocare sta in panchina a coprire i titolari più incerti. L'ordine conta tra giocatori dello stesso ruolo.</div>`
-      + B.map((p,k)=>`<div style="font-size:11px;color:#98a1b3;margin-top:6px;">${k+1}°</div>`+formRow(p)).join('') + `</div>`;
+    html += `</details><details class="strat-card" style="margin:0 0 12px;" open><summary style="font-weight:700;font-size:15px;cursor:pointer;">🪑 Dettaglio panchina</summary>
+      <div class="sub" style="font-size:12px;color:#6b7488;margin:6px 0;">Panchina fissa della lega: 1 portiere, 2 difensori, 2 centrocampisti, 2 attaccanti. Entra il primo del ruolo che ha preso voto (max ${formSettings.maxSubs} cambi, sempre dello stesso ruolo). Chi ha più probabilità di giocare sta in panchina a coprire i titolari più incerti. L'ordine conta tra giocatori dello stesso ruolo.</div>`
+      + B.map((p,k)=>`<div style="font-size:11px;color:#98a1b3;margin-top:6px;">${k+1}°</div>`+formRow(p)).join('') + `</details>`;
     if(results.length>1){
       html += `<div class="strat-card" style="margin:0 0 12px;"><h3>📊 Confronto moduli</h3>`
-        + results.map((r,k)=>`<div class="fascia-player"><span class="fp-name">${k===0?'🥇 ':''}${r.mod}</span><span class="fp-range">${r.E.toFixed(1)} pt · in 11: ${Math.round(r.p11*100)}%</span></div>`).join('')
+        + results.map((r,k)=>`<div class="fascia-player"><span class="fp-name">${k===0?'🥇 ':''}${r.mod}</span><span class="fp-range">${r.E.toFixed(1)} pt · mod +${r.modE.toFixed(1)} · in 11: ${Math.round(r.p11*100)}%</span></div>`).join('')
         + `</div>`;
     }
     window.__formText = `Formazione ${wk.giornata}ª giornata — ${best.mod}\n`
       + ['P','D','C','A'].map(r=>r+': '+S.filter(p=>p.r===r).map(p=>p.nome).join(', ')).join('\n')
-      + '\nPanchina: ' + B.map((p,k)=>(k+1)+'. '+p.nome).join(', ');
+      + '\nPanchina: ' + B.map((p,k)=>(k+1)+'. '+p.nome+' ('+p.r+')').join(', ');
   }
   const unavailable = pl.filter(p=>p.out || p.pVote<0.15);
   if(unavailable.length){
@@ -1847,23 +2043,24 @@ function renderFormTab(){
     <div style="display:flex;flex-wrap:wrap;gap:6px 14px;margin-bottom:8px;">`
     + Object.keys(FORM_MODULES).map(m=>`<label style="font-size:13px;"><input type="checkbox" ${A[m]?'checked':''} onchange="formSet('allowed.${m}',this.checked)"> ${m}</label>`).join('')
     + `</div>
-    <label style="font-size:13px;display:block;margin:4px 0;"><input type="checkbox" ${formSettings.need4D?'checked':''} onchange="formSet('need4D',this.checked)"> Almeno 4 difensori (per il modificatore difesa)</label>
-    <label style="font-size:13px;display:block;margin:4px 0;"><input type="checkbox" ${formSettings.benchGK?'checked':''} onchange="formSet('benchGK',this.checked)"> Portiere obbligatorio in panchina</label>
+    <label style="font-size:13px;display:block;margin:4px 0;"><input type="checkbox" ${formSettings.modifier?'checked':''} onchange="formSet('modifier',this.checked)"> Modificatore difesa (media 6 → +1, 6,5 → +3, 7 → +6)</label>
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin:8px 0;font-size:13px;">
-      <label>Posti panchina <select onchange="formSet('benchSize',+this.value)">${[5,6,7,8,9].map(n=>`<option ${formSettings.benchSize===n?'selected':''}>${n}</option>`).join('')}</select></label>
-      <label>Cambi max <select onchange="formSet('maxSubs',+this.value)">${[1,2,3,4,5,7].map(n=>`<option ${formSettings.maxSubs===n?'selected':''}>${n}</option>`).join('')}</select></label>
+      <label>Cambi max <select onchange="formSet('maxSubs',+this.value)">${[1,2,3,4,5,6,7].map(n=>`<option ${formSettings.maxSubs===n?'selected':''}>${n}</option>`).join('')}</select></label>
       <label>Priorità <select onchange="formSet('prudence',+this.value)">
         <option value="0" ${formSettings.prudence===0?'selected':''}>Più punti</option>
         <option value="1" ${formSettings.prudence===1?'selected':''}>Equilibrata</option>
         <option value="2" ${formSettings.prudence===2?'selected':''}>Prudente</option>
         <option value="3" ${formSettings.prudence===3?'selected':''}>Massima sicurezza</option></select></label>
     </div>
+    <div class="form-sub">Panchina fissa: 1 P, 2 D, 2 C, 2 A · Sostituzioni solo nello stesso ruolo (Switch disattivato) · Il modificatore usa il voto base di portiere e 3 migliori difensori e richiede almeno 4 difensori con voto.</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
       <button class="btn mine" style="padding:8px 12px;" onclick="formCopy()">📋 Copia formazione</button>
       ${weekOverride ? `<button class="btn other" style="padding:8px 12px;" onclick="formResetWeek()">↩︎ Usa i dati incorporati</button>` : ''}
     </div>
     <input type="file" id="weekFile" accept=".json,application/json" style="display:none;" onchange="formImportWeek(this.files[0]); this.value='';">
-    <div class="form-sub" style="margin-top:10px;line-height:1.5;">I punti attesi combinano la fantamedia (calcolata sulle giornate già nell'app), l'avversario e la quota di vittoria della tua squadra di Serie A, e la probabilità di prendere voto (titolare o subentrato). Sono stime, non certezze.</div></div>`;
+    <div class="form-sub" style="margin-top:10px;line-height:1.5;">I punti attesi combinano la fantamedia (calcolata sulle giornate già nell'app), l'avversario e la quota di vittoria della tua squadra di Serie A, la probabilità di prendere voto (titolare o subentrato) e il modificatore difesa. Sono stime, non certezze.</div>
+    <div class="form-sub" style="margin-top:8px;line-height:1.5;">MV e FM dei tuoi giocatori sono quelli dell'app ufficiale (${FORM_STATS_DATE}), ammorbiditi verso l'attesa pre-campionato perché i match sono pochi. I dati incollati vengono salvati anche nel backup 💾.</div>
+    <div class="form-sub" style="margin-top:8px;">Versione app: 23/10 · campo in stile app ufficiale</div></div>`;
   el.innerHTML = html;
 }
 
@@ -1994,6 +2191,8 @@ function formNormalize(d){
     const out = !!p.out;
     const ps = pct(p.pStart), sb = pct(p.pSub);
     players[String(id)] = {pStart: out?0:(ps==null?0.5:ps), pSub: out?0:(sb==null?0.4:sb), out, note:String(p.note||'').slice(0,140)};
+    if(p.fm!=null && isFinite(+p.fm)) players[String(id)].fm = +p.fm;
+    if(p.mv!=null && isFinite(+p.mv)) players[String(id)].mv = +p.mv;
     if(out) outNames.push(mine.get(String(id)).nome);
   }
   const missing = [...mine.values()].filter(p=>!(String(p.id) in players)).map(p=>p.nome);
@@ -2020,7 +2219,7 @@ async function formPasteFromClipboard(){
 }
 function formApply(){
   if(!formPreview || !formPreview.data) return;
-  weekOverride = formPreview.data; idbPutKey('weekData', weekOverride).catch(()=>{});
+  weekOverride = formPreview.data; formPersist('weekData', weekOverride);
   const g = weekOverride.giornata; formPreview = null; formPasteText = ''; formUpdOpen = false;
   showToast('Dati della '+g+'ª giornata applicati ✓'); renderFormTab();
 }
@@ -2077,7 +2276,7 @@ function formImportWeek(file){
   rd.onload = e=>{ formPasteText = String(e.target.result||''); formUpdOpen = true; formAnalyze(); };
   rd.readAsText(file);
 }
-function formResetWeek(){ weekOverride = null; idbPutKey('weekData', null).catch(()=>{}); showToast('Dati incorporati ripristinati'); renderFormTab(); }
+function formResetWeek(){ weekOverride = null; formPersist('weekData', null); showToast('Dati incorporati ripristinati'); renderFormTab(); }
 window.formSet = formSet; window.formCopy = formCopy; window.formImportWeek = formImportWeek; window.formResetWeek = formResetWeek;
 
 if(window.navigator.standalone || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)){
