@@ -1858,6 +1858,7 @@ function formSim(pl, S, B, R, M, maxSubs, N){
   }
   return {E:tot/N, p11:full/N, mod:modC.map(c=>c/N), modE:modTot/N};
 }
+const FORM_ROLE_ORD = {P:0,D:1,C:2,A:3};
 function formBuild(pl, mod, R, st){
   const need = FORM_MODULES[mod], M = pl.length;
   const ok = i=>pl[i].pVote>0, score = i=>pl[i].adj*pl[i].pVote;
@@ -1869,7 +1870,7 @@ function formBuild(pl, mod, R, st){
     if(pool.length<quota[r]) return null;
     starters.push(...pool.slice(0,quota[r]));
   }
-  const orderB = b=>b.slice().sort((x,y)=>pl[y].adj-pl[x].adj);
+  const orderB = b=>b.slice().sort((x,y)=> (FORM_ROLE_ORD[pl[x].r]-FORM_ROLE_ORD[pl[y].r]) || (pl[y].adj-pl[x].adj));
   const evalL = (S,B,n)=>formSim(pl,S,orderB(B),R,M,st.maxSubs,n||FORM_NSEARCH);
   const obj = r=>r.E - st.prudence*(1-r.p11)*6;
   const rest = ()=>all.filter(i=>ok(i) && !starters.includes(i) && !bench.includes(i));
@@ -1946,6 +1947,11 @@ function formRow(p){
       <div class="form-sub">${opp}</div>${p.note?`<div class="form-sub" style="color:#6b7488;">${p.note}</div>`:''}</span>
     <span style="text-align:right; white-space:nowrap;">${formChip(p)}<div class="form-sub">titolare ${Math.round(p.pStart*100)}%${offT}</div><div class="form-sub">${stats}</div></span></div>`;
 }
+function formBenchLabels(B){
+  const tot = {}, seen = {};
+  B.forEach(p=>{ tot[p.r] = (tot[p.r]||0)+1; });
+  return B.map(p=>{ seen[p.r] = (seen[p.r]||0)+1; return tot[p.r]>1 ? p.r+seen[p.r] : p.r; });
+}
 const FORM_KIT = {
   Atalanta:['#111827','#1f6fc4','s'], Bologna:['#1b2f5e','#b3262f','s'], Cagliari:['#a51e36','#0d2b5e','s'], Como:['#2b6cb0','#2b6cb0','o'],
   Fiorentina:['#5b2d8c','#5b2d8c','o'], Frosinone:['#f2c230','#1c4c9a','s'], Genoa:['#b3262f','#0d2b5e','h'], Inter:['#0b0b0b','#1b5db4','s'],
@@ -1973,9 +1979,9 @@ function formPitch(S, B, mod){
     <rect x="3" y="3" width="94" height="138" rx="1.5"/><line x1="3" y1="72" x2="97" y2="72"/><circle cx="50" cy="72" r="9.5"/>
     <rect x="24" y="3" width="52" height="24"/><rect x="38" y="3" width="24" height="10"/><rect x="24" y="117" width="52" height="24"/><rect x="38" y="131" width="24" height="10"/></g></svg>`;
   return `<div class="pitch2"><div class="pgrass">${lines}</div><div class="fpill">${mod}</div>${row('P')}${row('D')}${row('C')}${row('A')}</div>
-    <div class="form-sub" style="margin:2px 2px 6px;">Portiere in alto, come nella tua lega. La barra è la probabilità di partire titolare (verde alta, arancione media, grigia bassa); «voto» è la probabilità di prendere voto, anche subentrando.</div>
-    <div class="bhead">🪑 Panchina, in ordine di ingresso</div>
-    <div class="bgrid">${B.map((p,k)=>`<div class="bcard">${formCard(p,(k+1)+'° · voto '+Math.round(p.pVote*100)+'%')}</div>`).join('')}</div>`;
+    <div class="bhead">🪑 Panchina</div>
+    <div class="bgrid">${B.map((p,k)=>`<div class="bcard">${formCard(p, formBenchLabels(B)[k]+' · voto '+Math.round(p.pVote*100)+'%')}</div>`).join('')}</div>
+    <div class="form-sub" style="margin:8px 2px 0;line-height:1.5;">Panchina nell'ordine della tua lega: P, D, D, C, C, A, A. Dentro lo stesso ruolo entra per primo il numero 1 (D1 prima di D2). Portiere in alto, come nella tua lega. La barra è la probabilità di partire titolare (verde alta, arancione media, grigia bassa); «voto» è la probabilità di prendere voto, anche subentrando.</div>`;
 }
 function renderFormTab(){
   const el = document.getElementById('formContent'); if(!el) return;
@@ -2020,8 +2026,8 @@ function renderFormTabNow(){
       html += `<div class="fascia-title" style="margin-top:8px;">${{P:'Portiere',D:'Difensori',C:'Centrocampisti',A:'Attaccanti'}[r]}</div>` + grp.map(formRow).join('');
     }
     html += `</details><details class="strat-card" style="margin:0 0 12px;" open><summary style="font-weight:700;font-size:15px;cursor:pointer;">🪑 Dettaglio panchina</summary>
-      <div class="sub" style="font-size:12px;color:#6b7488;margin:6px 0;">Panchina fissa della lega: 1 portiere, 2 difensori, 2 centrocampisti, 2 attaccanti. Entra il primo del ruolo che ha preso voto (max ${formSettings.maxSubs} cambi, sempre dello stesso ruolo). Chi ha più probabilità di giocare sta in panchina a coprire i titolari più incerti. L'ordine conta tra giocatori dello stesso ruolo.</div>`
-      + B.map((p,k)=>`<div style="font-size:11px;color:#98a1b3;margin-top:6px;">${k+1}°</div>`+formRow(p)).join('') + `</details>`;
+      <div class="sub" style="font-size:12px;color:#6b7488;margin:6px 0;">Panchina fissa della lega, nell'ordine P, D, D, C, C, A, A. Entra il primo del ruolo che ha preso voto (max ${formSettings.maxSubs} cambi, sempre dello stesso ruolo). Chi ha più probabilità di giocare sta in panchina a coprire i titolari più incerti. L'ordine conta tra giocatori dello stesso ruolo.</div>`
+      + B.map((p,k)=>`<div style="font-size:11px;color:#98a1b3;margin-top:6px;">${formBenchLabels(B)[k]}</div>`+formRow(p)).join('') + `</details>`;
     if(results.length>1){
       html += `<div class="strat-card" style="margin:0 0 12px;"><h3>📊 Confronto moduli</h3>`
         + results.map((r,k)=>`<div class="fascia-player"><span class="fp-name">${k===0?'🥇 ':''}${r.mod}</span><span class="fp-range">${r.E.toFixed(1)} pt · mod +${r.modE.toFixed(1)} · in 11: ${Math.round(r.p11*100)}%</span></div>`).join('')
@@ -2029,7 +2035,7 @@ function renderFormTabNow(){
     }
     window.__formText = `Formazione ${wk.giornata}ª giornata — ${best.mod}\n`
       + ['P','D','C','A'].map(r=>r+': '+S.filter(p=>p.r===r).map(p=>p.nome).join(', ')).join('\n')
-      + '\nPanchina: ' + B.map((p,k)=>(k+1)+'. '+p.nome+' ('+p.r+')').join(', ');
+      + '\nPanchina (nell\'ordine della lega): ' + B.map(p=>p.nome+' ('+p.r+')').join(', ');
   }
   const unavailable = pl.filter(p=>p.out || p.pVote<0.15);
   if(unavailable.length){
