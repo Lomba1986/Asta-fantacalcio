@@ -1799,6 +1799,21 @@ function formPlayers(){
     else if(off){ fmRaw = off.fm; fm = (3*off.fm + 3*prior)/6; }          // pochi match: si tiene a metà strada con l'attesa pre-campionato
     else if(nPres>0 && st.fantaMedia){ fmRaw = st.fantaMedia; fm = (nPres*st.fantaMedia + 3*prior)/(nPres+3); }
     else { fmRaw = fm = prior; }
+    const fmSeason = fm;
+    // stato di forma: ultimi fantavoti (dal più vecchio al più recente; null = senza voto). I più recenti pesano di più.
+    const ult = (d && Array.isArray(d.ult) && d.ult.length) ? d.ult : null;
+    let recent = null, nR = 0, rate = null;
+    if(ult){
+      const vals = ult.map((v,k)=>({v, w:1+0.4*k})).filter(x=>x.v!=null);
+      nR = vals.length; rate = nR/ult.length;
+      if(nR>0){
+        const sw = vals.reduce((s,x)=>s+x.w,0);
+        recent = vals.reduce((s,x)=>s+x.v*x.w,0)/sw;
+        const recentS = (nR*recent + 2*fmSeason)/(nR+2);      // pochi voti: ci si tiene vicini alla media stagionale
+        const wF = Math.min(0.5, 0.14*nR);                      // fino a metà del peso con 4 voti recenti
+        fm = (1-wF)*fmSeason + wF*recentS;
+      }
+    }
     const mvRaw = (d && d.mv!=null) ? +d.mv : (off ? off.mv : null);
     let out = !!(d && d.out), pStart, pSub, note = d ? (d.note||'') : '';
     if(d){ pStart = out ? 0 : d.pStart; pSub = out ? 0 : d.pSub; }
@@ -1807,13 +1822,14 @@ function formPlayers(){
     else if(inj){ pStart = 0.2; pSub = 0.2; note = inj.tipo; }
     else if(off && off.tit!=null){ pStart = off.tit/100; pSub = 0.35; note = "Stima dall'app ufficiale ("+off.tit+"%)"; }
     else { pStart = 0.5; pSub = 0.5; note = 'Nessun dato per questa giornata'; }
-    const pVote = pStart + (1-pStart)*pSub;
+    let pVote = pStart + (1-pStart)*pSub;
+    // chi nelle ultime partite ha preso voto di rado è meno affidabile: si tiene conto con un peso del 20%
+    if(!out && rate!=null && ult.length>=3) pVote = 0.8*pVote + 0.2*rate;
     const t = (wk.teams||{})[p.squadra] || {};
     const mu = formMatchupAdj(p, wk, avg);
     const adj = fm + mu;
-    // voto base atteso (serve al modificatore difesa): media voto ufficiale ammorbidita, altrimenti stimata dal fantavoto
     const bm = mvRaw!=null ? (3*mvRaw + 2*FORM_B0)/5 + 0.8*mu : FORM_B0 + FORM_BSHR*(adj + FORM_BOFF[p.r] - FORM_B0);
-    return {id:p.id, nome:p.nome, r:p.r, squadra:p.squadra, fm, fmRaw, mvRaw, off, adj, bm, pStart, pSub, pVote, out, note, opp:t.opp, home:t.home, kickoff:t.kickoff, pWin:t.pWin};
+    return {id:p.id, nome:p.nome, r:p.r, squadra:p.squadra, fm, fmSeason, fmRaw, mvRaw, off, ult, recent, nR, adj, bm, pStart, pSub, pVote, out, note, opp:t.opp, home:t.home, kickoff:t.kickoff, pWin:t.pWin};
   });
 }
 
@@ -1859,60 +1875,96 @@ function formSim(pl, S, B, R, M, maxSubs, N){
   return {E:tot/N, p11:full/N, mod:modC.map(c=>c/N), modE:modTot/N};
 }
 const FORM_ROLE_ORD = {P:0,D:1,C:2,A:3};
+// peso del rischio di restare in meno di 11 per le quattro priorità: solo punti, equilibrata, prudente, sicurezza prima di tutto (mezzo punto percentuale di rischio vale oltre un punto di rendimento)
+const FORM_LAMBDA = [0, 1, 3, 40];
+function formCombos(arr, k){
+  const out=[], cur=[];
+  (function rec(start){
+    if(cur.length===k){ out.push(cur.slice()); return; }
+    for(let i=start;i<=arr.length-(k-cur.length);i++){ cur.push(arr[i]); rec(i+1); cur.pop(); }
+  })(0);
+  return out;
+}
+// Per ogni ruolo si provano TUTTE le scelte possibili di titolari e panchina (la rosa è piccola, quindi è fattibile).
+// Portiere e difesa si valutano insieme, perché il modificatore dipende da entrambi.
 function formBuild(pl, mod, R, st){
   const need = FORM_MODULES[mod], M = pl.length;
-  const ok = i=>pl[i].pVote>0, score = i=>pl[i].adj*pl[i].pVote;
-  const all = pl.map((_,i)=>i);
   const quota = {P:1, D:need.D, C:need.C, A:need.A};
+  const lam = FORM_LAMBDA[st.prudence]!=null ? FORM_LAMBDA[st.prudence] : st.prudence, N1 = 1500;
+  const ordB = b=>b.slice().sort((x,y)=> (FORM_ROLE_ORD[pl[x].r]-FORM_ROLE_ORD[pl[y].r]) || (pl[y].adj-pl[x].adj));
+  const sim = (S,B,n)=>formSim(pl,S,ordB(B),R,M,st.maxSubs,n);
+  const options = {};
+  for(const r of ['P','D','C','A']){
+    let c = pl.map((_,i)=>i).filter(i=>pl[i].r===r && pl[i].pVote>0);
+    const tot = quota[r] + (st.bench[r]||0);
+    if(c.length>tot){ const keep = c.filter(i=>pl[i].pVote>=0.15); if(keep.length>=quota[r]) c = keep; }   // si scartano i quasi certi assenti
+    if(c.length<quota[r]) return null;
+    const bq = Math.min(st.bench[r]||0, c.length-quota[r]), opts = [];
+    for(const S of formCombos(c,quota[r])){
+      const rest = c.filter(i=>!S.includes(i));
+      for(const B of formCombos(rest,bq)) opts.push({S, B, ps:S.reduce((s,i)=>s+pl[i].pStart,0)});
+    }
+    options[r] = opts;
+  }
+  const joint = st.modifier && need.D>=4;
+  const groups = joint ? [['P','D'],['C'],['A']] : [['P'],['D'],['C'],['A']];
+  const pick = {}, pg = {};
+  groups.forEach(g=>{ pg[g.join('')] = 1; });
+  const passes = lam>0 ? 2 : 1;
+  for(let pass=0; pass<passes; pass++){
+    for(const g of groups){
+      const key = g.join('');
+      let others = 1; for(const h of groups){ const k2 = h.join(''); if(k2!==key) others *= pg[k2]; }
+      const list = [];
+      if(g.length===2){ for(const x of options.P) for(const y of options.D) list.push([x,y]); }
+      else options[g[0]].forEach(o=>list.push([o]));
+      const evals = list.map(combo=>{
+        const S = combo.flatMap(o=>o.S), B = combo.flatMap(o=>o.B), res = sim(S,B,N1);
+        return {combo, res, psum:combo.reduce((s,o)=>s+o.ps,0), o:res.E - lam*6*(1-res.p11)*others};
+      });
+      const mx = Math.max(...evals.map(e=>e.o));
+      // a parità (entro 0,12 punti) si preferisce chi ha più titolari "sicuri"
+      const near = evals.filter(e=>e.o>=mx-0.12).sort((x,y)=>(y.psum-x.psum) || (y.o-x.o));
+      pick[key] = near[0].combo; pg[key] = near[0].res.p11;
+    }
+  }
   let starters = [], bench = [];
-  for(const r of ['P','D','C','A']){
-    const pool = all.filter(i=>pl[i].r===r && ok(i)).sort((a,b)=>score(b)-score(a));
-    if(pool.length<quota[r]) return null;
-    starters.push(...pool.slice(0,quota[r]));
-  }
-  const orderB = b=>b.slice().sort((x,y)=> (FORM_ROLE_ORD[pl[x].r]-FORM_ROLE_ORD[pl[y].r]) || (pl[y].adj-pl[x].adj));
-  const evalL = (S,B,n)=>formSim(pl,S,orderB(B),R,M,st.maxSubs,n||FORM_NSEARCH);
-  const obj = r=>r.E - st.prudence*(1-r.p11)*6;
-  const rest = ()=>all.filter(i=>ok(i) && !starters.includes(i) && !bench.includes(i));
-  // panchina con la forma fissata dalla lega (es. 1 P, 2 D, 2 C, 2 A): per ogni posto si sceglie il migliore del ruolo
-  for(const r of ['P','D','C','A']){
-    for(let k=0;k<(st.bench[r]||0);k++){
-      const c = rest().filter(i=>pl[i].r===r); if(!c.length) break;
-      let best=c[0], bo=-1e9;
-      for(const x of c){ const o=obj(evalL(starters,[...bench,x])); if(o>bo+1e-9){ bo=o; best=x; } }
-      bench.push(best);
-    }
-  }
-  let cur = evalL(starters,bench), curO = obj(cur), guard=0, improved=true;
-  while(improved && guard++<3){
-    improved=false;
-    for(let k=0;k<starters.length;k++){
-      const s=starters[k], r=pl[s].r;
-      for(const n of all.filter(i=>pl[i].r===r && ok(i) && !starters.includes(i))){
-        const S2=starters.slice(); S2[k]=n; const B2=bench.slice(); const bi=B2.indexOf(n); if(bi>=0) B2[bi]=s;
-        const res=evalL(S2,B2), o=obj(res);
-        if(o>curO+0.4){ starters=S2; bench=B2; cur=res; curO=o; improved=true; break; }
-      }
-    }
-  }
-  let again=true, g2=0;
-  while(again && g2++<2){
-    again=false;
-    for(let k=0;k<bench.length;k++){
-      const r=pl[bench[k]].r;
-      for(const n of rest().filter(i=>pl[i].r===r)){
-        const B2=bench.slice(); B2[k]=n; const res=evalL(starters,B2), o=obj(res);
-        if(o>curO+0.15){ bench=B2; cur=res; curO=o; again=true; break; }
-      }
-    }
-  }
-  const fin = evalL(starters, bench, FORM_NMAX);   // valutazione finale con più scenari
-  return {mod, starters, bench:orderB(bench), E:fin.E, p11:fin.p11, modP:fin.mod, modE:fin.modE, obj:obj(fin)};
+  const take = o=>{ starters.push(...o.S); bench.push(...o.B); };
+  if(joint){ pick.PD.forEach(take); take(pick.C[0]); take(pick.A[0]); }
+  else { take(pick.P[0]); take(pick.D[0]); take(pick.C[0]); take(pick.A[0]); }
+  const fin = sim(starters, bench, FORM_NMAX);
+  return {mod, starters, bench:ordB(bench), E:fin.E, p11:fin.p11, modP:fin.mod, modE:fin.modE, obj:fin.E - lam*6*(1-fin.p11)};
 }
 let formCache = {key:'', out:null};
+function formPrioName(){ return {0:'Più punti',1:'Equilibrata',2:'Prudente',3:'Massima sicurezza'}[formSettings.prudence] || ''; }
+function formPriorityCompare(){
+  const out = document.getElementById('formPrioOut'); if(!out) return;
+  out.innerHTML = '⏳ Calcolo la formazione migliore per ognuna delle quattro priorità…';
+  setTimeout(()=>{
+    const pl = formPlayers(), R = formRCache(pl.length);
+    const mods = Object.keys(FORM_MODULES).filter(m=>formSettings.allowed[m] && (!formSettings.need4D || FORM_MODULES[m].D>=4));
+    const rows = [0,1,2,3].map(l=>{
+      const st = Object.assign({}, formSettings, {prudence:l});
+      const r = mods.map(m=>formBuild(pl,m,R,st)).filter(Boolean).sort((a,b)=>b.obj-a.obj)[0];
+      return {l, r};
+    });
+    const cur = rows.find(x=>x.l===formSettings.prudence).r;
+    const set = r=>new Set(r.starters.map(i=>pl[i].nome)), cs = set(cur);
+    const names = {0:'Più punti',1:'Equilibrata',2:'Prudente',3:'Massima sicurezza'};
+    let html = '<div style="margin-top:8px;">' + rows.map(({l,r})=>{
+      const s = set(r), add = [...s].filter(x=>!cs.has(x)), rem = [...cs].filter(x=>!s.has(x));
+      const diff = (l===formSettings.prudence) ? '<b>quella scelta</b>' : (add.length ? 'cambia: entra '+add.join(', ')+' · esce '+rem.join(', ') : 'stessi titolari');
+      const bnch = r.bench.map(i=>pl[i].nome).join(', ');
+      return `<div class="fascia-player" style="align-items:flex-start;"><span class="fp-name">${names[l]}<div class="form-sub">${r.mod} · ${diff}</div><div class="form-sub">Panchina: ${bnch}</div></span><span class="fp-range" style="white-space:nowrap;">${r.E.toFixed(1)} pt<br>in 11: ${Math.round(r.p11*100)}%</span></div>`;
+    }).join('') + '</div>';
+    const allSame = rows.every(x=>JSON.stringify([...set(x.r)].sort())===JSON.stringify([...cs].sort()) && x.r.mod===cur.mod);
+    if(allSame) html += '<div class="form-sub" style="margin-top:6px;line-height:1.5;">Con la tua rosa e questi dati la formazione migliore è la stessa per tutte le priorità: i giocatori affidabili e quelli più forti coincidono, e ci sono pochi giocatori tra cui scegliere (la rosa ha solo 25 posti e la panchina ne usa 7). La priorità conta quando ci sono dubbi veri tra più giocatori dello stesso ruolo.</div>';
+    out.innerHTML = html;
+  }, 40);
+}
 function formKeyNow(){
   const pl = formPlayers(), wk = currentWeek();
-  return JSON.stringify([formSettings, wk.giornata, wk.generatedAt, pl.map(p=>[p.id,p.pStart,p.pSub,p.out,+p.fm.toFixed(2),+p.adj.toFixed(2),+p.bm.toFixed(2)])]);
+  return JSON.stringify([formSettings, wk.giornata, wk.generatedAt, pl.map(p=>[p.id,p.pStart,p.pSub,+p.pVote.toFixed(3),p.out,+p.fm.toFixed(2),+p.adj.toFixed(2),+p.bm.toFixed(2)])]);
 }
 function formCompute(){
   const pl = formPlayers();
@@ -1942,10 +1994,15 @@ function formRow(p){
   const opp = p.opp ? `vs ${p.opp}${p.home?' (casa)':' (trasf.)'} · ${formKick(p.kickoff)}${p.pWin!=null?' · vince '+Math.round(p.pWin*100)+'%':''}` : '';
   const offT = (p.off && p.off.tit!=null) ? ` · app ufficiale ${p.off.tit}%` : '';
   const stats = (p.mvRaw!=null ? 'MV '+p.mvRaw.toFixed(2)+' · ' : '') + 'FM '+p.fmRaw.toFixed(2);
+  let forma = '';
+  if(p.ult){
+    const tr = p.recent==null ? '' : (p.recent-p.fmSeason>=0.6 ? ' <b style="color:var(--green-ok)">▲ in forma</b>' : (p.recent-p.fmSeason<=-0.6 ? ' <b style="color:var(--red)">▼ in calo</b>' : ''));
+    forma = `<div class="form-sub">Ultime: ${p.ult.map(v=>v==null?'sv':(Math.round(v*10)/10)).join(' · ')}${tr}</div>`;
+  }
   return `<div class="fascia-player" style="align-items:flex-start;">
     <span class="fp-name"><span class="role-badge role-${p.r}">${p.r}</span> ${p.nome} <span class="fp-team">${p.squadra}</span>
       <div class="form-sub">${opp}</div>${p.note?`<div class="form-sub" style="color:#6b7488;">${p.note}</div>`:''}</span>
-    <span style="text-align:right; white-space:nowrap;">${formChip(p)}<div class="form-sub">titolare ${Math.round(p.pStart*100)}%${offT}</div><div class="form-sub">${stats}</div></span></div>`;
+    <span style="text-align:right; white-space:nowrap;">${formChip(p)}<div class="form-sub">titolare ${Math.round(p.pStart*100)}%${offT}</div><div class="form-sub">${stats}</div>${forma}</span></div>`;
 }
 function formBenchLabels(B){
   const tot = {}, seen = {};
@@ -2017,7 +2074,7 @@ function renderFormTabNow(){
         ${formSettings.modifier ? `<span class="form-chip fc-green" style="font-size:12.5px;">Modificatore difesa ~+${best.modE.toFixed(1)}</span>` : ''}
       </div>
       ${formSettings.modifier ? `<div class="form-sub" style="margin:0 0 8px;">Modificatore: nessuno ${mp[0]}% · +1 ${mp[1]}% · +3 ${mp[2]}% · +6 ${mp[3]}% (i punti attesi lo includono)</div>` : ''}
-      ${formPitch(S, B, best.mod)}
+      <div class="form-sub" style="margin:0 0 4px;">Priorità: ${formPrioName()} · si cambia dalle impostazioni in fondo</div>${formPitch(S, B, best.mod)}
     </div>
     <details class="strat-card" style="margin:0 0 12px;" open>
       <summary style="font-weight:700;font-size:15px;cursor:pointer;">📋 Dettaglio titolari</summary>`;
@@ -2061,12 +2118,14 @@ function renderFormTabNow(){
     <div class="form-sub">Panchina fissa: 1 P, 2 D, 2 C, 2 A · Sostituzioni solo nello stesso ruolo (Switch disattivato) · Il modificatore usa il voto base di portiere e 3 migliori difensori e richiede almeno 4 difensori con voto.</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
       <button class="btn mine" style="padding:8px 12px;" onclick="formCopy()">📋 Copia formazione</button>
+      <button class="btn other" style="padding:8px 12px;" onclick="formPriorityCompare()">🔍 Confronta le priorità</button>
       ${weekOverride ? `<button class="btn other" style="padding:8px 12px;" onclick="formResetWeek()">↩︎ Usa i dati incorporati</button>` : ''}
     </div>
+    <div id="formPrioOut"></div>
     <input type="file" id="weekFile" accept=".json,application/json" style="display:none;" onchange="formImportWeek(this.files[0]); this.value='';">
     <div class="form-sub" style="margin-top:10px;line-height:1.5;">I punti attesi combinano la fantamedia (calcolata sulle giornate già nell'app), l'avversario e la quota di vittoria della tua squadra di Serie A, la probabilità di prendere voto (titolare o subentrato) e il modificatore difesa. Sono stime, non certezze.</div>
     <div class="form-sub" style="margin-top:8px;line-height:1.5;">MV e FM dei tuoi giocatori sono quelli dell'app ufficiale (${FORM_STATS_DATE}), ammorbiditi verso l'attesa pre-campionato perché i match sono pochi. I dati incollati vengono salvati anche nel backup 💾.</div>
-    <div class="form-sub" style="margin-top:8px;">Versione app: 23/10 · campo in stile app ufficiale</div></div>`;
+    <div class="form-sub" style="margin-top:8px;">Versione app: 26/10 · stato di forma e ottimizzatore completo</div></div>`;
   el.innerHTML = html;
 }
 
@@ -2118,6 +2177,7 @@ COSA DEVI TROVARE
 3. Squalificati ufficiali (Giudice Sportivo) e indisponibili o infortunati di ogni squadra.
 4. Probabili formazioni, ballottaggi, conferenze stampa della vigilia, convocati ufficiali se già usciti, rischio turnover (squadre reduci da coppe europee o nazionali).
 5. Per ognuno dei miei 25 giocatori: probabilità che parta titolare e, se parte dalla panchina, probabilità che entri e prenda voto.
+6. STATO DI FORMA: per ognuno dei miei 25 giocatori, i fantavoti delle ultime 4 giornate di campionato, dal più vecchio al più recente (usa le pagelle e i voti di Fantacalcio.it, Gazzetta o SosFanta). Il fantavoto è il voto più bonus e malus della mia lega: gol +3, assist +1, rigore segnato +3, rigore parato +3, rigore sbagliato -3, gol subito -1, porta inviolata +1, ammonizione -0,5, espulsione -1, autogol -2. Se in una giornata un giocatore non ha preso voto (non convocato, in panchina senza entrare, senza voto) scrivi null in quella posizione.
 
 REGOLE DI QUALITÀ (sono errori già capitati)
 - Controlla sempre la data delle fonti: scarta articoli di stagioni passate e notizie superate.
@@ -2133,7 +2193,7 @@ Rispondi con UN SOLO blocco di codice JSON valido (niente commenti dentro il JSO
   "lockAt": "2026-10-23T20:45:00+02:00",
   "generatedAt": "2026-10-22T18:00:00+02:00",
   "teams": { "Inter": { "opp": "Bologna", "home": false, "kickoff": "2026-10-24T18:00:00+02:00", "pWin": 0.6, "gf": 18, "ga": 8, "pj": 6 } },
-  "players": { "${formFirstId()}": { "pStart": 0.9, "pSub": 0.3, "out": false, "note": "Titolare, ballottaggio con X" } }
+  "players": { "${formFirstId()}": { "pStart": 0.9, "pSub": 0.3, "out": false, "note": "Titolare, ballottaggio con X", "ult": [6.5, 7, null, 8.5] } }
 }
 - "teams": una voce per OGNI squadra che gioca, con questi nomi esatti: ${formClubs().join(', ')}.
 - "pWin" di una squadra = probabilità che QUELLA squadra vinca, ricavata dalle quote 1X2 togliendo il margine del bookmaker.
@@ -2141,6 +2201,7 @@ Rispondi con UN SOLO blocco di codice JSON valido (niente commenti dentro il JSO
 - "players": una voce per OGNUNO dei 25 giocatori, con l'id indicato sopra come chiave.
 - pStart (parte titolare) e pSub (se parte dalla panchina, entra e prende voto) sono numeri da 0 a 1. Scala indicativa: titolare quasi certo 0.95, ballottaggio 50/50 = 0.5, panchina probabile 0.1-0.2; per i portieri pSub = 0. Se un giocatore non è disponibile (infortunato, squalificato, non convocato) metti "out": true, pStart 0, pSub 0 e spiega il motivo nella nota.
 - "note": in italiano, massimo 90 caratteri: motivo, ballottaggio o fonte principale.
+- "ult": i 4 ultimi fantavoti del giocatore (dal più vecchio al più recente), con null dove non ha preso voto. Se non li trovi lascia l'elenco vuoto: [].
 - kickoff e lockAt con il fuso orario italiano (+01:00 oppure +02:00, a seconda dell'ora legale).
 Dopo il blocco JSON scrivi al massimo 6 punti con i dubbi principali e le fonti usate.`;
 }
@@ -2199,6 +2260,7 @@ function formNormalize(d){
     players[String(id)] = {pStart: out?0:(ps==null?0.5:ps), pSub: out?0:(sb==null?0.4:sb), out, note:String(p.note||'').slice(0,140)};
     if(p.fm!=null && isFinite(+p.fm)) players[String(id)].fm = +p.fm;
     if(p.mv!=null && isFinite(+p.mv)) players[String(id)].mv = +p.mv;
+    if(Array.isArray(p.ult)){ const u = p.ult.slice(-5).map(x=>(x==null || x==='' || isNaN(+x)) ? null : Math.max(0, Math.min(15, +x))); if(u.length) players[String(id)].ult = u; }
     if(out) outNames.push(mine.get(String(id)).nome);
   }
   const missing = [...mine.values()].filter(p=>!(String(p.id) in players)).map(p=>p.nome);
